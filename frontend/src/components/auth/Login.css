@@ -1,0 +1,321 @@
+/* components/auth/Login.css */
+
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffc700, #b88917);
+  padding: 1rem;
+}
+
+.auth-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 20px 60px rgba(59, 56, 1, 0.15);
+  width: 100%;
+  max-width: 450px;
+  border: 3px solid #ffc700;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #ffc700;
+}
+
+.auth-header h2 {
+  color: #3b3801;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.auth-header p {
+  color: #b88917;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* Login Type Selection */
+.login-type-selector {
+  margin-bottom: 1.5rem;
+}
+
+.login-type-label {
+  font-weight: 600;
+  color: #3b3801;
+  margin-bottom: 0.5rem;
+  display: block;
+  font-size: 0.9rem;
+}
+
+.login-type-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.login-type-btn {
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  border: 2px solid #e0e0e0;
+  background: white;
+  color: #6c757d;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.login-type-btn:hover {
+  border-color: #ffc700;
+  background: #fffbf0;
+}
+
+.login-type-btn.active {
+  background: #ffc700;
+  border-color: #ffc700;
+  color: #3b3801;
+  font-weight: 600;
+}
+
+/* Form Styling */
+.login-form {
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #3b3801;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #ffc700;
+  box-shadow: 0 0 0 3px rgba(255, 199, 0, 0.1);
+}
+
+.form-control::placeholder {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Button Styling */
+.btn {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-primary {
+  background: #ffc700;
+  color: #3b3801;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  width: 100%;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #e6b300;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 199, 0, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 2px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background: #e9ecef;
+  border-color: #ffc700;
+}
+
+/* Link Button */
+.link-btn {
+  background: none;
+  border: none;
+  color: #ffc700;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+  font-size: inherit;
+}
+
+.link-btn:hover {
+  color: #b88917;
+}
+
+/* Footer */
+.auth-footer {
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.auth-footer p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Admin Notice */
+.admin-notice {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #ffc700;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #3b3801;
+  text-align: center;
+  border: 2px solid #b88917;
+}
+
+.admin-notice strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Pending Message */
+.pending-message {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  border-radius: 12px;
+  margin: 1rem 0;
+  border: 2px solid #ffeeba;
+}
+
+.pending-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.pending-message h3 {
+  color: #856404;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.pending-message p {
+  color: #856404;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.pending-actions {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+/* Loading States */
+.btn-loading {
+  position: relative;
+  color: transparent;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid #3b3801;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .auth-container {
+    padding: 1rem;
+  }
+  
+  .auth-card {
+    padding: 2rem;
+    max-width: 100%;
+  }
+  
+  .auth-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .login-type-buttons {
+    gap: 0.25rem;
+  }
+  
+  .login-type-btn {
+    padding: 0.625rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+  
+  .auth-header {
+    margin-bottom: 1.5rem;
+  }
+  
+  .auth-header h2 {
+    font-size: 1.3rem;
+  }
+  
+  .form-control {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .btn-primary {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+}

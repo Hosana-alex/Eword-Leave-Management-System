@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
+from flask_migrate import Migrate
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
@@ -10,6 +11,8 @@ from dotenv import load_dotenv
 from utils.database import db
 from models.user import User
 from models.leave_application import LeaveApplication
+from models.leave_balance import LeaveBalance
+from models.notification import Notification
 
 # Import email service
 from utils.email_service import init_mail
@@ -20,6 +23,8 @@ from routes.leave import leave_bp
 from routes.admin import admin_bp
 from routes.user import user_bp
 from routes.analytics import analytics_bp
+from routes.notifications import notifications_bp
+
 
 # Load environment variables
 load_dotenv()
@@ -36,6 +41,7 @@ def create_app():
     
     # Initialize extensions
     db.init_app(app)
+    migrate = Migrate(app, db)  # Add this line
     CORS(app)
     jwt = JWTManager(app)
     bcrypt = Bcrypt(app)
@@ -49,7 +55,7 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix='/api')
     app.register_blueprint(user_bp, url_prefix='/api')
     app.register_blueprint(analytics_bp, url_prefix='/api')
-    
+    app.register_blueprint(notifications_bp, url_prefix='/api')    
     # Initialize database and create default admin
     @app.before_request
     def create_tables():
@@ -58,21 +64,21 @@ def create_app():
             db.create_all()
             
             # Create default admin user if it doesn't exist
-            admin = User.query.filter_by(email='admin@ewordpublishers.com').first()
+            admin = User.query.filter_by(email='info.ewordpublishers@gmail.com').first()
             if not admin:
                 admin = User(
-                    email='admin@ewordpublishers.com',
+                    email='info.ewordpublishers@gmail.com',  # Updated email
                     name='System Administrator',
                     department='Administration',
-                    designation='System Admin',
-                    contacts='admin@ewordpublishers.com',
-                    role='admin'
+                    designation='Eword Admin',
+                    contacts='info.ewordpublishers@gmail.com',  # Updated contact
+                    role='admin',
+                    status='approved'
                 )
-                admin.set_password('admin123')  # Change this in production!
+                admin.set_password('admin123')
                 db.session.add(admin)
                 db.session.commit()
-                print("Default admin user created: admin@ewordpublishers.com / admin123")
-            
+                
             create_tables.tables_created = True
     
     return app

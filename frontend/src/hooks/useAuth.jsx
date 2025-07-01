@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
+      // Use the correct profile endpoint
       api.get('/user/profile')
         .then(response => {
           setUser(response.data);
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      // Use /login endpoint  
       const response = await api.post('/login', { email, password });
       const { access_token, user } = response.data;
       
@@ -36,8 +38,15 @@ export const AuthProvider = ({ children }) => {
       toast.success('Login successful!');
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
+      console.error('Login error:', error);
+      const message = error.response?.data?.message || error.response?.data?.error || 'Login failed';
       const status = error.response?.data?.status;
+      
+      // Handle specific error cases
+      if (error.response?.status === 403) {
+        return { success: false, status: 'pending', message };
+      }
+      
       toast.error(message);
       return { success: false, status, message };
     }
@@ -51,22 +60,56 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await api.post('/register', userData);
-      toast.success(response.data.message);
-      return { success: true, status: response.data.status };
+      // Use /auth/register endpoint (since blueprint is registered with /api prefix)
+      const response = await api.post('/auth/register', userData);
+      
+      const message = response.data.message;
+      const autoApproved = response.data.auto_approved;
+      const status = response.data.status;
+      
+      // Show appropriate success message
+      if (autoApproved) {
+        toast.success('Registration successful! You can now log in.');
+      } else {
+        toast.success('Registration submitted for approval.');
+      }
+      
+      return { 
+        success: true, 
+        status: status,
+        auto_approved: autoApproved,
+        message: message
+      };
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Registration failed');
-      return { success: false };
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          'Registration failed';
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const refreshUser = async () => {
+    try {
+      const response = await api.get('/user/profile');
+      setUser(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+      return null;
     }
   };
 
   return (
     <AuthContext.Provider value={{ 
       user, 
+      setUser,
       login, 
       logout, 
       register, 
-      loading 
+      loading,
+      refreshUser
     }}>
       {children}
     </AuthContext.Provider>

@@ -1,0 +1,335 @@
+/* components/admin/UserManagement.css */
+
+/* =================================
+   USER MANAGEMENT COMPONENT STYLES
+   ================================= */
+
+.user-management {
+  padding: 2rem;
+}
+
+.user-management-header {
+  margin-bottom: 2rem;
+}
+
+.user-management-title {
+  color: var(--text-dark, #3b3801);
+  margin-bottom: 0.5rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.user-management-subtitle {
+  color: var(--text-muted, #6c757d);
+  margin: 0;
+}
+
+/* =================================
+   FILTERS AND SEARCH SECTION
+   ================================= */
+
+.user-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: var(--background-light, #f8f9fa);
+  border-radius: 8px;
+  border: 2px solid var(--primary-color, #ffc700);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: white;
+  color: var(--text-muted, #6c757d);
+  cursor: pointer;
+  font-weight: normal;
+  text-transform: capitalize;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.filter-button.active {
+  background: var(--primary-color, #ffc700);
+  color: var(--text-dark, #3b3801);
+  font-weight: bold;
+}
+
+.filter-button:hover:not(.active) {
+  background: var(--hover-light, #f0f0f0);
+}
+
+.user-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color, #dee2e6);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.user-search:focus {
+  outline: none;
+  border-color: var(--primary-color, #ffc700);
+  box-shadow: 0 0 0 2px rgba(255, 199, 0, 0.2);
+}
+
+.refresh-button {
+  padding: 0.5rem 1rem;
+  background: var(--info-color, #3498db);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+}
+
+.refresh-button:hover {
+  background: var(--info-dark, #2980b9);
+}
+
+/* =================================
+   USERS TABLE
+   ================================= */
+
+.users-table-container {
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #dee2e6);
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.users-table thead tr {
+  background: var(--background-light, #f8f9fa);
+  border-bottom: 2px solid var(--primary-color, #ffc700);
+}
+
+.users-table th {
+  padding: 1rem;
+  text-align: left;
+  color: var(--text-dark, #3b3801);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.users-table th.center {
+  text-align: center;
+}
+
+.users-table tbody tr {
+  border-bottom: 1px solid var(--border-light, #f0f0f0);
+  transition: background 0.2s ease;
+}
+
+.users-table tbody tr:hover {
+  background: var(--hover-light, #f8f9ff);
+}
+
+.users-table td {
+  padding: 1rem;
+  color: var(--text-muted, #6c757d);
+}
+
+.users-table td.center {
+  text-align: center;
+}
+
+/* =================================
+   USER INFO CELLS
+   ================================= */
+
+.user-name-cell {
+  color: var(--text-dark, #3b3801);
+  font-weight: 600;
+}
+
+.user-designation {
+  font-size: 0.8rem;
+  color: var(--text-muted, #6c757d);
+  margin-top: 0.25rem;
+}
+
+.user-email {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.85rem;
+}
+
+/* =================================
+   STATUS BADGES
+   ================================= */
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.pending {
+  background: var(--warning-color, #f39c12);
+  color: white;
+}
+
+.status-badge.approved {
+  background: var(--success-color, #27ae60);
+  color: white;
+}
+
+.status-badge.rejected {
+  background: var(--danger-color, #e74c3c);
+  color: white;
+}
+
+/* =================================
+   ACTION BUTTONS
+   ================================= */
+
+.user-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.action-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.action-button.approve {
+  background: var(--success-color, #27ae60);
+  color: white;
+}
+
+.action-button.approve:hover {
+  background: var(--success-dark, #219a52);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(39, 174, 96, 0.3);
+}
+
+.action-button.reject {
+  background: var(--danger-color, #e74c3c);
+  color: white;
+}
+
+.action-button.reject:hover {
+  background: var(--danger-dark, #c0392b);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.no-actions {
+  color: var(--text-muted, #6c757d);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* =================================
+   EMPTY STATE
+   ================================= */
+
+.users-empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted, #6c757d);
+}
+
+.users-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.users-empty-title {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-dark, #3b3801);
+  font-size: 1.2rem;
+}
+
+.users-empty-message {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* =================================
+   RESPONSIVE DESIGN
+   ================================= */
+
+@media (max-width: 768px) {
+  .user-management {
+    padding: 1rem;
+  }
+  
+  .user-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-buttons {
+    justify-content: center;
+  }
+  
+  .user-search {
+    min-width: auto;
+  }
+  
+  .users-table-container {
+    font-size: 0.8rem;
+  }
+  
+  .users-table th,
+  .users-table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .user-actions {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .action-button {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-management-title {
+    font-size: 1.5rem;
+  }
+  
+  .filter-buttons {
+    flex-wrap: wrap;
+  }
+  
+  .filter-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}

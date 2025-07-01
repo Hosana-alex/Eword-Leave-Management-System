@@ -1,14 +1,16 @@
 // components/profile/UserProfile.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { api } from '../../services/api';
+import { userAPI } from '../../services/api';
 import { toast } from 'react-toastify';
+import './UserProfile.css';
 
 const UserProfile = ({ onClose }) => {
   const { user, setUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [leaveBalance, setLeaveBalance] = useState(null);
+  const [balanceError, setBalanceError] = useState(null);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -25,11 +27,16 @@ const UserProfile = ({ onClose }) => {
 
   const fetchLeaveBalance = async () => {
     try {
-      const response = await api.get('/user/leave-balance');
+      const response = await userAPI.getLeaveBalance();
       setLeaveBalance(response.data);
+      setBalanceError(null);
     } catch (error) {
-      console.error('Failed to fetch leave balance');
+      setBalanceError(error.response?.data?.error || 'Failed to load leave balance');
     }
+  };
+
+  const refreshBalance = () => {
+    fetchLeaveBalance();
   };
 
   const handleChange = (e) => {
@@ -41,7 +48,7 @@ const UserProfile = ({ onClose }) => {
     setLoading(true);
     
     try {
-      const response = await api.put('/user/profile', formData);
+      const response = await userAPI.updateProfile(formData);
       setUser(response.data.user);
       toast.success('Profile updated successfully!');
       setIsEditing(false);
@@ -53,196 +60,149 @@ const UserProfile = ({ onClose }) => {
   };
 
   const LeaveBalanceCard = ({ type, data }) => (
-    <div style={{
-      padding: '1rem',
-      background: '#f8f9fa',
-      borderRadius: '8px',
-      border: '1px solid #ffc700',
-      marginBottom: '0.5rem'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <strong style={{ color: '#3b3801', textTransform: 'capitalize' }}>
+    <div className="balance-card">
+      <div className="balance-header">
+        <strong className="balance-type">
           {type.replace('_', ' ')}
         </strong>
-        <div style={{ textAlign: 'right' }}>
-          <span style={{ color: '#6c757d', fontSize: '0.85rem' }}>
+        <div className="balance-info">
+          <span className="balance-usage">
             Used: {data.used}/{data.total}
           </span>
-          <div style={{
-            fontSize: '1.2rem',
-            fontWeight: 'bold',
-            color: data.remaining > 0 ? '#27ae60' : '#e74c3c'
-          }}>
+          <div className={`balance-remaining ${data.remaining > 0 ? 'positive' : 'negative'}`}>
             {data.remaining} days left
           </div>
         </div>
       </div>
-      <div style={{
-        marginTop: '0.5rem',
-        height: '8px',
-        background: '#e0e0e0',
-        borderRadius: '4px',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          height: '100%',
-          width: `${(data.used / data.total) * 100}%`,
-          background: data.remaining > 0 ? '#ffc700' : '#e74c3c',
-          transition: 'width 0.3s ease'
-        }} />
+      <div className="balance-progress">
+        <div 
+          className={`balance-progress-bar ${data.remaining > 0 ? 'normal' : 'exceeded'}`}
+          style={{ width: `${Math.min((data.used / data.total) * 100, 100)}%` }}
+        />
       </div>
     </div>
   );
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '2rem',
-        maxWidth: '800px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflow: 'auto',
-        border: '2px solid #ffc700'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '2rem',
-          paddingBottom: '1rem',
-          borderBottom: '2px solid #ffc700'
-        }}>
-          <h2 style={{ margin: 0, color: '#3b3801' }}>My Profile</h2>
+    <div className="profile-overlay">
+      <div className="profile-modal">
+        <div className="profile-header">
+          <h2 className="profile-title">My Profile</h2>
           <button
             onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              color: '#6c757d'
-            }}
+            className="profile-close"
+            aria-label="Close profile"
           >
             ×
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-          {/* Profile Information */}
-          <div>
-            <h3 style={{ color: '#3b3801', marginBottom: '1rem' }}>
-              Personal Information
+        <div className="profile-content">
+          {/* Profile Information Section */}
+          <div className="profile-section">
+            <div className="section-header">
+              <h3 className="section-title">Personal Information</h3>
               {!isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="btn btn-secondary"
-                  style={{ marginLeft: '1rem', fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}
+                  className="btn btn-secondary edit-btn"
                 >
                   ✏️ Edit
                 </button>
               )}
-            </h3>
+            </div>
             
             {isEditing ? (
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label>Full Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    className="form-control"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
+              <form onSubmit={handleSubmit} className="profile-form">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Full Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      className="form-control"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      className="form-control disabled"
+                      value={formData.email}
+                      disabled
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Department</label>
+                    <input
+                      type="text"
+                      name="department"
+                      className="form-control"
+                      value={formData.department}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Designation</label>
+                    <input
+                      type="text"
+                      name="designation"
+                      className="form-control"
+                      value={formData.designation}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Contact Number</label>
+                    <input
+                      type="text"
+                      name="contacts"
+                      className="form-control"
+                      value={formData.contacts}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Emergency Contact Name</label>
+                    <input
+                      type="text"
+                      name="emergency_contact"
+                      className="form-control"
+                      value={formData.emergency_contact}
+                      onChange={handleChange}
+                      placeholder="Emergency contact person"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Emergency Contact Phone</label>
+                    <input
+                      type="text"
+                      name="emergency_phone"
+                      className="form-control"
+                      value={formData.emergency_phone}
+                      onChange={handleChange}
+                      placeholder="Emergency contact number"
+                    />
+                  </div>
                 </div>
                 
-                <div className="form-group">
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    className="form-control"
-                    value={formData.email}
-                    disabled
-                    style={{ background: '#f5f5f5' }}
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Department</label>
-                  <input
-                    type="text"
-                    name="department"
-                    className="form-control"
-                    value={formData.department}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Designation</label>
-                  <input
-                    type="text"
-                    name="designation"
-                    className="form-control"
-                    value={formData.designation}
-                    onChange={handleChange}
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Contact Number</label>
-                  <input
-                    type="text"
-                    name="contacts"
-                    className="form-control"
-                    value={formData.contacts}
-                    onChange={handleChange}
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Emergency Contact Name</label>
-                  <input
-                    type="text"
-                    name="emergency_contact"
-                    className="form-control"
-                    value={formData.emergency_contact}
-                    onChange={handleChange}
-                    placeholder="Emergency contact person"
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Emergency Contact Phone</label>
-                  <input
-                    type="text"
-                    name="emergency_phone"
-                    className="form-control"
-                    value={formData.emergency_phone}
-                    onChange={handleChange}
-                    placeholder="Emergency contact number"
-                  />
-                </div>
-                
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                  <button type="submit" className="btn btn-primary" disabled={loading}>
+                <div className="form-actions">
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary" 
+                    disabled={loading}
+                  >
                     {loading ? 'Saving...' : 'Save Changes'}
                   </button>
                   <button
@@ -255,44 +215,84 @@ const UserProfile = ({ onClose }) => {
                 </div>
               </form>
             ) : (
-              <div>
-                <p><strong>Name:</strong> {user?.name}</p>
-                <p><strong>Email:</strong> {user?.email}</p>
-                <p><strong>Department:</strong> {user?.department}</p>
-                <p><strong>Designation:</strong> {user?.designation || 'Not specified'}</p>
-                <p><strong>Contact:</strong> {user?.contacts || 'Not specified'}</p>
-                <p><strong>Emergency Contact:</strong> {user?.emergency_contact || 'Not specified'}</p>
-                <p><strong>Emergency Phone:</strong> {user?.emergency_phone || 'Not specified'}</p>
-                <p><strong>Role:</strong> <span className="status-badge status-approved">{user?.role}</span></p>
-                <p><strong>Member Since:</strong> {new Date(user?.created_at).toLocaleDateString()}</p>
+              <div className="profile-details">
+                <div className="detail-item">
+                  <strong>Name:</strong> <span>{user?.name}</span>
+                </div>
+                <div className="detail-item">
+                  <strong>Email:</strong> <span>{user?.email}</span>
+                </div>
+                <div className="detail-item">
+                  <strong>Department:</strong> <span>{user?.department}</span>
+                </div>
+                <div className="detail-item">
+                  <strong>Designation:</strong> <span>{user?.designation || 'Not specified'}</span>
+                </div>
+                <div className="detail-item">
+                  <strong>Contact:</strong> <span>{user?.contacts || 'Not specified'}</span>
+                </div>
+                <div className="detail-item">
+                  <strong>Emergency Contact:</strong> <span>{user?.emergency_contact || 'Not specified'}</span>
+                </div>
+                <div className="detail-item">
+                  <strong>Emergency Phone:</strong> <span>{user?.emergency_phone || 'Not specified'}</span>
+                </div>
+                <div className="detail-item">
+                  <strong>Role:</strong> 
+                  <span className="status-badge status-approved">{user?.role}</span>
+                </div>
+                <div className="detail-item">
+                  <strong>Status:</strong> 
+                  <span className={`status-badge status-${user?.status}`}>{user?.status}</span>
+                </div>
+                <div className="detail-item">
+                  <strong>Member Since:</strong> 
+                  <span>{new Date(user?.created_at).toLocaleDateString()}</span>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Leave Balance */}
-          <div>
-            <h3 style={{ color: '#3b3801', marginBottom: '1rem' }}>
-              Leave Balance ({new Date().getFullYear()})
-            </h3>
-            
-            {leaveBalance ? (
-              <div>
-                {Object.entries(leaveBalance.balances).map(([type, data]) => (
+          {/* Leave Balance Section */}
+          <div className="profile-section">
+            <div className="section-header">
+              <h3 className="section-title">
+                Leave Balance ({new Date().getFullYear()})
+              </h3>
+              <button
+                onClick={refreshBalance}
+                className="btn btn-secondary refresh-btn"
+                title="Refresh leave balance"
+              >
+                🔄 Refresh
+              </button>
+            </div>
+              
+            {leaveBalance && leaveBalance.balance && leaveBalance.balance.balances ? (
+              <div className="balance-list">
+                {Object.entries(leaveBalance.balance.balances).map(([type, data]) => (
                   <LeaveBalanceCard key={type} type={type} data={data} />
                 ))}
               </div>
             ) : (
-              <p style={{ color: '#6c757d' }}>Loading leave balance...</p>
+              <div className="no-balance-message">
+                <p className="message-title">
+                  <strong>No leave balance data available.</strong>
+                </p>
+                <p className="message-subtitle">This might be because:</p>
+                <ul className="message-list">
+                  <li>Your account is still pending approval</li>
+                  <li>Leave balances haven't been set up yet</li>
+                  <li>You're a new employee</li>
+                </ul>
+                <p className="message-contact">
+                  Contact your administrator if you think this is an error.
+                </p>
+              </div>
             )}
             
-            <div style={{
-              marginTop: '1rem',
-              padding: '1rem',
-              background: '#fff3cd',
-              borderRadius: '8px',
-              border: '1px solid #ffeeba'
-            }}>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#856404' }}>
+            <div className="balance-note">
+              <p>
                 <strong>Note:</strong> Leave balances are reset at the beginning of each year. 
                 Unused leaves do not carry forward.
               </p>
