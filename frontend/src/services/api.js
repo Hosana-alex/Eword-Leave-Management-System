@@ -44,9 +44,33 @@ export const authAPI = {
 
 // ===== USER MANAGEMENT ENDPOINTS =====
 export const userAPI = {
-  // Profile management
-  getProfile: () => api.get("/user/profile"),
-  updateProfile: (profileData) => api.put("/user/profile", profileData),
+  // Profile management - ENHANCED with better error handling
+  getProfile: () => {
+    console.log("🔍 API: Fetching user profile...");
+    return api.get("/user/profile");
+  },
+
+  updateProfile: (profileData) => {
+    console.log("🔄 API: Updating profile with data:", profileData);
+    return api
+      .put("/user/profile", profileData)
+      .then((response) => {
+        console.log("✅ API: Profile update successful:", response.data);
+        return response;
+      })
+      .catch((error) => {
+        console.error("❌ API: Profile update failed:", error);
+        console.error("❌ API: Error details:", {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          url: error.config?.url,
+          method: error.config?.method,
+        });
+        throw error;
+      });
+  },
+
   uploadProfilePicture: (formData) =>
     api.post("/user/profile/picture", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -65,16 +89,71 @@ export const userAPI = {
 
 // ===== ADMIN USER MANAGEMENT ENDPOINTS =====
 export const adminUserAPI = {
-  // User management
+  // User management - ENHANCED with activity data
   getAllUsers: (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
     return api.get(`/admin/users?${params}`);
   },
+
+  // NEW: Enhanced users with activity snapshot
+  getEnhancedUsers: (filters = {}) => {
+    console.log("🔍 API: Fetching enhanced users with activity data...");
+    const params = new URLSearchParams(filters).toString();
+    return api
+      .get(`/admin/users/enhanced?${params}`)
+      .then((response) => {
+        console.log(
+          "✅ API: Enhanced users loaded:",
+          response.data.users?.length || 0,
+          "users"
+        );
+        return response;
+      })
+      .catch((error) => {
+        console.error("❌ API: Enhanced users fetch failed:", error);
+        throw error;
+      });
+  },
+
+  // NEW: Activity statistics
+  getActivityStats: () => {
+    console.log("📊 API: Fetching user activity statistics...");
+    return api
+      .get("/admin/users/activity-stats")
+      .then((response) => {
+        console.log(
+          "✅ API: Activity stats loaded:",
+          response.data.activity_stats
+        );
+        return response;
+      })
+      .catch((error) => {
+        console.error("❌ API: Activity stats fetch failed:", error);
+        throw error;
+      });
+  },
+
   getUserById: (userId) => api.get(`/admin/users/${userId}`),
   approveUser: (userId) => api.put(`/admin/users/${userId}/approve`),
   rejectUser: (userId) => api.put(`/admin/users/${userId}/reject`),
   updateUser: (userId, userData) => api.put(`/admin/users/${userId}`, userData),
   deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
+
+  // ADDED: Reset user password
+  resetUserPassword: (userId) =>
+    api.post(`/admin/users/${userId}/reset-password`),
+
+  // ADDED: Bulk user operations
+  bulkApproveUsers: (userIds) =>
+    api.post(`/admin/users/bulk-approve`, { user_ids: userIds }),
+  bulkRejectUsers: (userIds) =>
+    api.post(`/admin/users/bulk-reject`, { user_ids: userIds }),
+  bulkDeactivateUsers: (userIds) =>
+    api.post(`/admin/users/bulk-deactivate`, { user_ids: userIds }),
+
+  // ADDED: User activation/deactivation
+  activateUser: (userId) => api.put(`/admin/users/${userId}/activate`),
+  deactivateUser: (userId) => api.put(`/admin/users/${userId}/deactivate`),
 
   // User leave balances
   getUserLeaveBalance: (userId, year = new Date().getFullYear()) =>
@@ -366,6 +445,35 @@ export const errorHandler = {
 
   isForbiddenError: (error) => {
     return error.response?.status === 403;
+  },
+};
+
+// ===== DEBUG HELPERS FOR DEVELOPMENT =====
+export const debugAPI = {
+  // Test profile update
+  testProfileUpdate: async (sampleData = { name: "Test User" }) => {
+    console.log("🧪 Testing profile update...");
+    try {
+      const response = await userAPI.updateProfile(sampleData);
+      console.log("✅ Profile update test successful:", response.data);
+      return response;
+    } catch (error) {
+      console.error("❌ Profile update test failed:", error);
+      throw error;
+    }
+  },
+
+  // Check API connection
+  checkConnection: async () => {
+    console.log("🔍 Checking API connection...");
+    try {
+      const response = await api.get("/auth/user");
+      console.log("✅ API connection successful");
+      return response;
+    } catch (error) {
+      console.error("❌ API connection failed:", error);
+      throw error;
+    }
   },
 };
 

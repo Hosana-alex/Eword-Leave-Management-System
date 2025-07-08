@@ -29,26 +29,48 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // Use /login endpoint  
       const response = await api.post('/login', { email, password });
-      const { access_token, user } = response.data;
+      const { access_token, user, password_reset_required } = response.data;
       
+      // FIXED: Store token with consistent key name
       localStorage.setItem('access_token', access_token);
       setUser(user);
-      toast.success('Login successful!');
-      return { success: true };
-    } catch (error) {
-      console.error('Login error:', error);
-      const message = error.response?.data?.message || error.response?.data?.error || 'Login failed';
-      const status = error.response?.data?.status;
       
-      // Handle specific error cases
-      if (error.response?.status === 403) {
-        return { success: false, status: 'pending', message };
+      // Check if password reset is required
+      if (password_reset_required) {
+        return {
+          success: true,
+          password_reset_required: true,
+          user: user,
+          message: 'Password reset required'
+        };
       }
       
-      toast.error(message);
-      return { success: false, status, message };
+      // Normal successful login - only show toast if no password reset needed
+      toast.success(`Welcome back, ${user.name}!`);
+      return {
+        success: true,
+        password_reset_required: false,
+        user: user
+      };
+      
+    } catch (error) {
+      const errorData = error.response?.data;
+      
+      if (error.response?.status === 403 && errorData?.status === 'pending') {
+        return {
+          success: false,
+          status: 'pending',
+          message: errorData.message
+        };
+      }
+      
+      const errorMessage = errorData?.message || 'Login failed';
+      toast.error(errorMessage);
+      return {
+        success: false,
+        message: errorMessage
+      };
     }
   };
 

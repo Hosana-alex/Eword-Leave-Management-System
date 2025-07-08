@@ -75,7 +75,7 @@ body {
 }
 
 /* =================================
-   HEADER & NAVIGATION STYLES
+   HEADER & NAVIGATION STYLES - FIXED
    ================================= */
 
 .header {
@@ -96,6 +96,7 @@ body {
   max-width: var(--large);
   margin: 0 auto;
   height: 100%;
+  gap: 1rem; /* ADDED: Space between sections */
 }
 
 /* FIXED: Logo section with consistent sizing */
@@ -103,29 +104,32 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
-  min-width: 280px; /* Prevents wrapping */
-  flex-shrink: 0; /* Prevents shrinking */
+  min-width: 280px;
+  flex-shrink: 0;
 }
 
 .logo-icon {
   width: 50px;
   height: 50px;
-  background: var(--primary-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-dark);
-  font-size: 1.5rem;
-  font-weight: bold;
-  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--primary-color);
+}
+
+.logo-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .logo h1 {
   color: white;
   font-size: 1.5rem;
   font-weight: 700;
-  white-space: nowrap; /* FIXED: Prevents text wrapping */
+  white-space: nowrap;
   margin: 0;
   line-height: 1.2;
 }
@@ -134,17 +138,22 @@ body {
   font-size: 0.9rem;
   opacity: 0.8;
   margin: 0;
-  white-space: nowrap; /* FIXED: Prevents text wrapping */
+  white-space: nowrap;
 }
 
-/* Navigation Tabs */
+/* FIXED: Navigation Tabs - Better responsive behavior */
 .nav-tabs {
   display: flex;
   gap: 0.75rem;
   align-items: center;
   flex: 1;
   justify-content: center;
-  flex-wrap: wrap;
+  min-width: 0; /* ADDED: Allows shrinking */
+}
+
+/* Hide nav tabs on very small screens */
+.desktop-nav {
+  display: flex;
 }
 
 .nav-tab {
@@ -160,6 +169,7 @@ body {
   white-space: nowrap;
   position: relative;
   overflow: hidden;
+  min-width: fit-content; /* ADDED: Prevents over-compression */
 }
 
 .nav-tab::before {
@@ -190,15 +200,22 @@ body {
   box-shadow: 0 2px 8px rgba(255, 199, 0, 0.3);
 }
 
-/* User Info Section */
+/* FIXED: User Info Section - Much better spacing */
 .user-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-left: 1rem;
+  gap: 1rem; /* INCREASED: More space between items */
+  min-width: fit-content; /* ADDED: Prevents compression */
+  flex-shrink: 0; /* ADDED: Prevents shrinking */
   padding-left: 1rem;
   border-left: 1px solid rgba(255, 255, 255, 0.3);
-  flex-shrink: 0;
+}
+
+/* ADDED: Desktop user menu specific styling */
+.desktop-user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* ADDED: Space between user name and logout */
 }
 
 /* =================================

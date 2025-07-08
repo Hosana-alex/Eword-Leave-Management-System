@@ -1,11 +1,12 @@
-// components/auth/Login.jsx - SIMPLIFIED VERSION
+// components/auth/Login.jsx - Updated with Password Reset Modal
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
 import Register from './Register';
+import PasswordResetModal from '../common/PasswordResetModal'; // NEW IMPORT
 import './Login.css';
 
-const Login = () => {
+const Login = ({ onPasswordResetComplete }) => {
   const [showRegister, setShowRegister] = useState(false);
   const [showPendingMessage, setShowPendingMessage] = useState(false);
   const [loginType, setLoginType] = useState('employee'); // 'employee' or 'admin'
@@ -14,6 +15,11 @@ const Login = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
+  
+  // NEW: Password Reset Modal State
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const [userData, setUserData] = useState(null);
+  
   const { login } = useAuth();
 
   const handleChange = (e) => {
@@ -26,10 +32,38 @@ const Login = () => {
     
     const result = await login(formData.email, formData.password);
     
+    // NEW: Check for password reset requirement
+    if (result.success && result.password_reset_required) {
+      // User needs to change password
+      setUserData(result.user);
+      setShowPasswordResetModal(true);
+      setLoading(false);
+      return;
+    }
+    
     if (!result.success && result.status === 'pending') {
       setShowPendingMessage(true);
     }
     setLoading(false);
+  };
+
+  // NEW: Handle password reset completion
+  const handlePasswordResetComplete = () => {
+    setShowPasswordResetModal(false);
+    setUserData(null);
+    // Clear form
+    setFormData({ email: '', password: '' });
+    
+    // Show success message only once
+    toast.success('Password changed successfully! Welcome to the system.');
+    
+    // Notify parent component (App.jsx) that password reset is complete
+    if (props.onPasswordResetComplete) {
+      props.onPasswordResetComplete();
+    } else {
+      // Fallback: refresh the page to reload user data
+      window.location.reload();
+    }
   };
 
   // Show Register component
@@ -156,6 +190,13 @@ const Login = () => {
           )}
         </div>
       </div>
+
+      {/* NEW: Password Reset Modal */}
+      <PasswordResetModal
+        isOpen={showPasswordResetModal}
+        onComplete={handlePasswordResetComplete}
+        userName={userData?.name}
+      />
     </div>
   );
 };

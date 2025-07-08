@@ -1,4 +1,4 @@
-// components/notifications/NotificationCenter.jsx - Clean version with CSS classes
+// components/notifications/NotificationCenter.jsx - Production ready version
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
@@ -163,13 +163,9 @@ const NotificationCenter = ({ isOpen, onClose }) => {
 
   const handleNotificationAction = (notification) => {
     if (notification.action_url) {
-      console.log('Navigate to:', notification.action_url);
-      toast.info(`Navigating to ${notification.action_url}`);
-      
       if (!notification.read) {
         markAsRead(notification.id);
       }
-      
       onClose();
     }
   };
@@ -207,7 +203,6 @@ const NotificationCenter = ({ isOpen, onClose }) => {
     if (filter === 'read') return notif.read;
     return true;
   });
-  console.log('Filter:', filter, 'Filtered notifications:', filteredNotifications);
 
   if (!isOpen) return null;
 
@@ -346,7 +341,6 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                       </span>
                       
                       <div className="notification-actions-group">
-                        {/* Mark as Read Button (for unread notifications) */}
                         {!notification.read && (
                           <button
                             onClick={(e) => {
@@ -360,7 +354,6 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                           </button>
                         )}
                         
-                        {/* Action Button - only show if there's an action_url */}
                         {notification.action_url && (
                           <button
                             onClick={(e) => {
@@ -395,10 +388,11 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   );
 };
 
-// Enhanced Notification Hook (unchanged)
+// Enhanced Notification Hook - Production ready
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [recentToasts, setRecentToasts] = useState(new Set());
 
   const fetchUnreadCount = async () => {
     try {
@@ -420,28 +414,57 @@ export const useNotifications = () => {
     setNotifications(prev => [newNotification, ...prev]);
     setUnreadCount(prev => prev + 1);
     
-    const icon = {
-      success: '✅',
-      warning: '⚠️',
-      error: '❌',
-      info: 'ℹ️'
-    }[notification.type] || '🔔';
+    // Create a unique key for this notification type + title
+    const toastKey = `${notification.type}-${notification.title}`;
+    const now = Date.now();
     
-    toast(
-      <div className="toast-notification">
-        <div className="toast-header">
-          <strong>{icon} {notification.title}</strong>
-        </div>
-        <div className="toast-message">
-          {notification.message}
-        </div>
-      </div>,
-      {
-        type: notification.type || 'info',
-        autoClose: 5000,
-        className: 'custom-toast'
-      }
-    );
+    // Only show toast if this type hasn't been shown in the last 2 minutes
+    const shouldShowToast = !Array.from(recentToasts).some(entry => {
+      const [key, timestamp] = entry.split('|');
+      return key === toastKey && (now - parseInt(timestamp)) < 120000; // 2 minutes
+    });
+    
+    if (shouldShowToast) {
+      const icon = {
+        success: '✅',
+        warning: '⚠️',
+        error: '❌',
+        info: 'ℹ️'
+      }[notification.type] || '🔔';
+      
+      toast(
+        <div className="toast-notification">
+          <div className="toast-header">
+            <strong>{icon} {notification.title}</strong>
+          </div>
+          <div className="toast-message">
+            {notification.message}
+          </div>
+        </div>,
+        {
+          type: notification.type || 'info',
+          autoClose: 5000,
+          className: 'custom-toast'
+        }
+      );
+      
+      // Track this toast
+      setRecentToasts(prev => {
+        const newSet = new Set(prev);
+        newSet.add(`${toastKey}|${now}`);
+        
+        // Clean up old entries (older than 5 minutes)
+        const fiveMinutesAgo = now - 300000;
+        Array.from(newSet).forEach(entry => {
+          const [, timestamp] = entry.split('|');
+          if (parseInt(timestamp) < fiveMinutesAgo) {
+            newSet.delete(entry);
+          }
+        });
+        
+        return newSet;
+      });
+    }
   };
 
   const markAsRead = (notificationId) => {
@@ -458,6 +481,7 @@ export const useNotifications = () => {
   const clearAll = () => {
     setNotifications([]);
     setUnreadCount(0);
+    setRecentToasts(new Set());
   };
 
   return {

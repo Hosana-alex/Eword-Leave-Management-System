@@ -12,10 +12,14 @@ import DashboardAnalytics from './components/analytics/DashboardAnalytics';
 import NotificationCenter, { useNotifications } from './components/notifications/NotificationCenter';
 import UserManagement from './components/admin/UserManagement';
 import './styles/globals.css';
+import logoIcon from './assets/images/Logo.png';
 
 const AppContent = () => {
   const { user, logout, loading } = useAuth();
   const { notifications, unreadCount, addNotification } = useNotifications();
+  
+  // NEW: Track if user needs password reset
+  const [userNeedsPasswordReset, setUserNeedsPasswordReset] = useState(false);
   
   // Set initial tab based on user role
   const [currentTab, setCurrentTab] = useState(
@@ -32,6 +36,15 @@ const AppContent = () => {
   useEffect(() => {
     if (user) {
       setCurrentTab(user.role === 'admin' ? 'dashboard' : 'my-applications');
+    }
+  }, [user]);
+
+  // NEW: Check if user needs password reset
+  useEffect(() => {
+    if (user && user.password_reset_required) {
+      setUserNeedsPasswordReset(true);
+    } else {
+      setUserNeedsPasswordReset(false);
     }
   }, [user]);
 
@@ -66,39 +79,6 @@ const AppContent = () => {
     };
   }, [mobileMenuOpen]);
 
-  // Simulate real-time notifications (in production, use WebSocket or polling)
-  useEffect(() => {
-    if (user) {
-      // Simulate receiving notifications
-      const interval = setInterval(() => {
-        if (Math.random() > 0.8) { // 20% chance every 30 seconds
-          const notifications = [
-            {
-              title: 'Leave Application Update',
-              message: 'Your leave application status has been updated.',
-              type: 'info'
-            },
-            {
-              title: 'New Leave Request',
-              message: 'A new leave application requires your review.',
-              type: 'warning'
-            },
-            {
-              title: 'Leave Approved',
-              message: 'Your recent leave application has been approved!',
-              type: 'success'
-            }
-          ];
-          
-          const randomNotification = notifications[Math.floor(Math.random() * notifications.length)];
-          addNotification(randomNotification);
-        }
-      }, 30000); // Check every 30 seconds
-
-      return () => clearInterval(interval);
-    }
-  }, [user, addNotification]);
-
   if (loading) {
     return (
       <div className="loading-container">
@@ -131,10 +111,11 @@ const AppContent = () => {
     );
   }
 
-  if (!user) {
+  // UPDATED: Show login if no user OR if user needs password reset
+  if (!user || userNeedsPasswordReset) {
     return (
       <div className="app">
-        <Login />
+        <Login onPasswordResetComplete={() => setUserNeedsPasswordReset(false)} />
         <ToastContainer 
           position="top-right" 
           autoClose={3000}
@@ -156,7 +137,9 @@ const AppContent = () => {
       <header className="header">
         <div className="header-content">
           <div className="logo">
-            <div className="logo-icon">EP</div>
+            <div className="logo-icon">
+              <img src={logoIcon} alt="EP Logo" />
+            </div>
             <div>
               <h1>EWORD PUBLISHERS</h1>
               <p>Leave Management System</p>

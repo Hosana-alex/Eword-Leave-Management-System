@@ -92,6 +92,8 @@ def register():
         return jsonify({'error': str(e)}), 500
 
 
+# Update your login route in auth.py
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
     try:
@@ -108,11 +110,30 @@ def login():
                     'status': user.status
                 }), 403
             
-            # Make sure to pass user.id as a string to create_access_token
+            # Update last login
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            
+            # Check if password reset is required (with proper boolean conversion)
+            needs_reset = bool(user.password_reset_required)  # Convert to proper boolean
+            
+            if needs_reset:
+                # Create a limited access token for password reset only
+                access_token = create_access_token(identity=str(user.id))
+                return jsonify({
+                    'access_token': access_token,
+                    'user': user.to_dict(),
+                    'password_reset_required': True,
+                    'message': 'Password reset required. Please change your password to continue.'
+                }), 200
+            
+            # Normal login - create full access token
             access_token = create_access_token(identity=str(user.id))
+            user.update_last_login()
             return jsonify({
                 'access_token': access_token,
-                'user': user.to_dict()
+                'user': user.to_dict(),
+                'password_reset_required': False  # ← Always explicitly False for normal login
             }), 200
         
         return jsonify({'message': 'Invalid email or password'}), 401
@@ -121,24 +142,93 @@ def login():
         print(f"❌ Login error: {str(e)}")
         return jsonify({'message': f'Login failed: {str(e)}'}), 500
 
+# Add this to your routes/auth.py or routes/user.py
 
-@auth_bp.route('/user/profile', methods=['GET'])
+@auth_bp.route('/user/profile', methods=['PUT'])
 @jwt_required()
-def get_profile():
+def update_profile():
+    """Update user profile information"""
     try:
-        # get_jwt_identity() returns a string, so convert to int for database query
         user_id = get_jwt_identity()
         user = User.query.get(int(user_id))
         
         if not user:
-            return jsonify({'message': 'User not found'}), 404
+            return jsonify({'error': 'User not found'}), 404
         
+        data = request.get_json()
+        
+        # Update basic information
+        if 'name' in data:
+            user.name = data['name']
+        if 'department' in data:
+            user.department = data['department']
+        if 'designation' in data:
+            user.designation = data['designation']
+        if 'contacts' in data:
+            user.contacts = data['contacts']
+            
+        # Update emergency contact information
+        if 'emergency_contact' in data:
+            user.emergency_contact = data['emergency_contact']
+        if 'emergency_phone' in data:
+            user.emergency_phone = data['emergency_phone']
+        if 'emergency_relationship' in data:
+            user.emergency_relationship = data['emergency_relationship']
+            
+        # Update personal information
+        if 'date_of_birth' in data and data['date_of_birth']:
+            try:
+                user.date_of_birth = datetime.strptime(data['date_of_birth'], '%Y-%m-%d').date()
+            except ValueError:
+                pass  # Invalid date format, skip
+        if 'gender' in data:
+            user.gender = data['gender']
+            
+        # Update address information
+        if 'address' in data:
+            user.address = data['address']
+        if 'city' in data:
+            user.city = data['city']
+        if 'postal_code' in data:
+            user.postal_code = data['postal_code']
+            
+        # Update employment details
+        if 'employment_type' in data:
+            user.employment_type = data['employment_type']
+        
+        # Update timestamp
+        user.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Profile updated successfully',
+            'user': user.to_dict()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Profile update error: {str(e)}")
+        return jsonify({'error': 'Failed to update profile'}), 500
+
+
+# Also add a GET endpoint to fetch profile
+@auth_bp.route('/user/profile', methods=['GET'])
+@jwt_required()
+def get_profile():
+    """Get current user profile"""
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(int(user_id))
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
         return jsonify(user.to_dict()), 200
-    
+        
     except Exception as e:
         print(f"❌ Profile fetch error: {str(e)}")
-        return jsonify({'message': f'Failed to get profile: {str(e)}'}), 500
-
+        return jsonify({'error': 'Failed to fetch profile'}), 500
 
 @auth_bp.route('/auth/user', methods=['GET'])
 @jwt_required()
@@ -157,6 +247,8 @@ def get_current_user():
         print(f"❌ Current user fetch error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
+# Update your change password route in auth.py
 
 @auth_bp.route('/auth/change-password', methods=['PUT'])
 @jwt_required()
@@ -182,16 +274,70 @@ def change_password():
         
         # Update password
         user.set_password(new_password)
+        user.password_reset_required = False  # Clear the reset flag
         user.updated_at = datetime.utcnow()
         db.session.commit()
         
-        return jsonify({'message': 'Password changed successfully'}), 200
+        return jsonify({
+            'message': 'Password changed successfully',
+            'password_reset_completed': True
+        }), 200
     
     except Exception as e:
         db.session.rollback()
         print(f"❌ Password change error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
+# Add a new route for forced password reset (when user is required to change)
+@auth_bp.route('/auth/force-change-password', methods=['PUT'])
+@jwt_required()
+def force_change_password():
+    """Force password change for users with password_reset_required=True"""
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(int(user_id))
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Only allow this if password reset is required
+        if not user.password_reset_required:
+            return jsonify({'error': 'Password reset not required'}), 400
+        
+        data = request.get_json()
+        current_password = data.get('current_password')  # The temporary password
+        new_password = data.get('new_password')
+        confirm_password = data.get('confirm_password')
+        
+        if not all([current_password, new_password, confirm_password]):
+            return jsonify({'error': 'All password fields are required'}), 400
+        
+        if new_password != confirm_password:
+            return jsonify({'error': 'New passwords do not match'}), 400
+        
+        if len(new_password) < 8:
+            return jsonify({'error': 'New password must be at least 8 characters long'}), 400
+        
+        # Verify current (temporary) password
+        if not user.check_password(current_password):
+            return jsonify({'error': 'Current password is incorrect'}), 400
+        
+        # Update to new password
+        user.set_password(new_password)
+        user.password_reset_required = False  # Clear the reset flag
+        user.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Password changed successfully. You can now use the system normally.',
+            'password_reset_completed': True
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Force password change error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @auth_bp.route('/auth/logout', methods=['POST'])
 @jwt_required()

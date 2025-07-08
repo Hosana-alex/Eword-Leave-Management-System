@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_, or_
@@ -8,10 +8,16 @@ from models.leave_balance import LeaveBalance
 from utils.database import db
 from utils.email_service import send_status_update_email
 import threading
+from werkzeug.security import generate_password_hash
+import secrets
+import csv
+import io
+from datetime import datetime
 from routes.notifications import (
     notify_leave_application_status_changed, 
     notify_leave_application_submitted
 )
+from utils.email_service import send_status_update_email, send_password_reset_email
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -321,6 +327,7 @@ def update_application_status(application_id):
         db.session.rollback()
         print(f"❌ Error updating application status: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
 # ===== LEGACY APPROVE/REJECT ROUTES (for backward compatibility) =====
 
 @admin_bp.route('/leave-applications/<int:app_id>/approve', methods=['PUT'])
@@ -454,3 +461,267 @@ def get_department_analytics():
     except Exception as e:
         print(f"Error in get_department_analytics: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
+
+# ===== PHASE 1 NEW ENDPOINTS (FIXED ROUTES) =====
+
+
+@admin_bp.route('/admin/users/<int:user_id>/reset-password', methods=['POST'])
+@jwt_required()
+def reset_user_password(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        # Generate temporary password
+        temp_password = secrets.token_urlsafe(12)
+        
+        # Set new password and mark for reset
+        user.set_password(temp_password)
+        user.password_reset_required = True
+        
+        # Ensure user can login (reactivate if deactivated)
+        if user.status == 'deactivated':
+            user.status = 'approved'
+        
+        db.session.commit()
+        
+        # Send password reset email
+        send_password_reset_email(user.email, user.name, temp_password)
+        
+        return jsonify({
+            'message': f'Password reset email sent to {user.name}',
+            'success': True
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/admin/users/<int:user_id>/deactivate', methods=['PUT'])
+@jwt_required()
+def deactivate_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        user.status = 'deactivated'
+        user.deactivated_at = datetime.utcnow()  # Add this field to User model
+        user.deactivated_by = get_jwt_identity()  # Track who deactivated
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'User {user.name} deactivated successfully',
+            'success': True
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/admin/users/<int:user_id>/reactivate', methods=['PUT'])
+@jwt_required()
+def reactivate_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        user.status = 'approved'
+        user.reactivated_at = datetime.utcnow()  # Add this field to User model
+        user.reactivated_by = get_jwt_identity()  # Track who reactivated
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'User {user.name} reactivated successfully',
+            'success': True
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/admin/users/bulk-approve', methods=['POST'])
+@jwt_required()
+def bulk_approve_users():
+    try:
+        data = request.get_json()
+        user_ids = data.get('userIds', [])
+        
+        if not user_ids:
+            return jsonify({'error': 'No user IDs provided'}), 400
+        
+        # Update users in bulk
+        users = User.query.filter(User.id.in_(user_ids)).all()
+        approved_count = 0
+        
+        for user in users:
+            if user.status == 'pending':
+                user.status = 'approved'
+                user.approved_at = datetime.utcnow()
+                user.approved_by = get_jwt_identity()
+                
+                # Create leave balances for approved user
+                create_initial_leave_balances(user.id)
+                
+                # Send approval email
+                send_approval_email(user.email, user.name)
+                
+                approved_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'{approved_count} users approved successfully',
+            'success': True,
+            'approved_count': approved_count
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/admin/users/bulk-reject', methods=['POST'])
+@jwt_required()
+def bulk_reject_users():
+    try:
+        data = request.get_json()
+        user_ids = data.get('userIds', [])
+        
+        if not user_ids:
+            return jsonify({'error': 'No user IDs provided'}), 400
+        
+        # Update users in bulk
+        users = User.query.filter(User.id.in_(user_ids)).all()
+        rejected_count = 0
+        
+        for user in users:
+            if user.status == 'pending':
+                user.status = 'rejected'
+                user.rejected_at = datetime.utcnow()
+                user.rejected_by = get_jwt_identity()
+                
+                # Send rejection email
+                send_rejection_email(user.email, user.name)
+                
+                rejected_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'{rejected_count} users rejected successfully',
+            'success': True,
+            'rejected_count': rejected_count
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/admin/users/bulk-deactivate', methods=['POST'])
+@jwt_required()
+def bulk_deactivate_users():
+    try:
+        data = request.get_json()
+        user_ids = data.get('userIds', [])
+        
+        if not user_ids:
+            return jsonify({'error': 'No user IDs provided'}), 400
+        
+        # Update users in bulk
+        users = User.query.filter(User.id.in_(user_ids)).all()
+        deactivated_count = 0
+        
+        for user in users:
+            if user.status in ['approved', 'pending']:
+                user.status = 'deactivated'
+                user.deactivated_at = datetime.utcnow()
+                user.deactivated_by = get_jwt_identity()
+                deactivated_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'{deactivated_count} users deactivated successfully',
+            'success': True,
+            'deactivated_count': deactivated_count
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/admin/users/export', methods=['POST'])
+@jwt_required()
+def export_users_csv():
+    try:
+        data = request.get_json()
+        user_ids = data.get('userIds', [])
+        
+        if not user_ids:
+            return jsonify({'error': 'No user IDs provided'}), 400
+        
+        # Get users
+        users = User.query.filter(User.id.in_(user_ids)).all()
+        
+        # Create CSV content
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow([
+            'ID', 'Name', 'Email', 'Department', 'Designation', 
+            'Status', 'Contact', 'Emergency Contact', 'Emergency Phone',
+            'Registered Date', 'Last Login'
+        ])
+        
+        # Write user data
+        for user in users:
+            writer.writerow([
+                user.id,
+                user.name,
+                user.email,
+                user.department,
+                user.designation or '',
+                user.status,
+                user.contacts or '',
+                user.emergency_contact or '',
+                user.emergency_phone or '',
+                user.created_at.strftime('%Y-%m-%d') if user.created_at else '',
+                user.last_login.strftime('%Y-%m-%d %H:%M') if hasattr(user, 'last_login') and user.last_login else 'Never'
+            ])
+        
+        # Create response
+        csv_content = output.getvalue()
+        output.close()
+        
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=users_export_{datetime.now().strftime("%Y%m%d")}.csv'
+        
+        return response
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+def create_initial_leave_balances(user_id):
+    """Create initial leave balances for newly approved user"""
+    current_year = datetime.now().year
+    existing_balance = LeaveBalance.query.filter_by(user_id=user_id, year=current_year).first()
+    
+    if not existing_balance:
+        leave_balance = LeaveBalance(
+            user_id=user_id,
+            year=current_year,
+            sick_leave_total=14,
+            personal_leave_total=21,
+            maternity_leave_total=90,
+            study_leave_total=10,
+            bereavement_leave_total=5
+        )
+        db.session.add(leave_balance)
+
+def send_approval_email(email, name):
+    """Send user approval email"""
+    # Implement approval email logic
+    pass
+
+def send_rejection_email(email, name):
+    """Send user rejection email"""
+    # Implement rejection email logic
+    pass

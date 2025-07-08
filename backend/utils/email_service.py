@@ -234,3 +234,128 @@ EWORD PUBLISHERS - Making Printing Easy
     except Exception as e:
         print(f"Failed to send status email: {str(e)}")
         return False
+    
+def send_password_reset_email(email, name, temp_password):
+    """Send password reset email with temporary password"""
+    try:
+        msg = Message(
+            subject='Password Reset - EWORD Publishers Leave Management',
+            recipients=[email]
+        )
+        
+        msg.sender = current_app.config.get('MAIL_DEFAULT_SENDER')
+        
+        msg.body = f"""
+Dear {name},
+
+Your password has been reset by an administrator. Here are your new login credentials:
+
+Email: {email}
+Temporary Password: {temp_password}
+
+IMPORTANT: Please log in and change your password immediately for security.
+
+If you have any questions, please contact your administrator.
+
+Best regards,
+EWORD Publishers Team
+        """
+        
+        msg.html = f"""
+<html>
+<body style="font-family: Arial, sans-serif; color: #333; margin: 0; padding: 0; background-color: #f5f5f5;">
+    <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #3b3801 0%, #b88917 50%, #ffc700 100%); color: white; padding: 30px 25px; text-align: center;">
+            <div style="background: #ffc700; color: #3b3801; width: 60px; height: 60px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; margin-bottom: 15px;">
+                EP
+            </div>
+            <h1 style="margin: 0 0 5px 0; font-size: 24px; font-weight: 600;">EWORD PUBLISHERS</h1>
+            <p style="margin: 0; opacity: 0.9; font-size: 14px;">Making Printing Easy</p>
+        </div>
+        
+        <!-- Status Banner -->
+        <div style="background: #3498db; color: white; padding: 20px 25px; text-align: center;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 600;">
+                🔑 Password Reset
+            </h2>
+        </div>
+        
+        <!-- Content -->
+        <div style="padding: 30px 25px;">
+            <p style="margin: 0 0 20px 0; font-size: 16px; color: #333;">Dear {name},</p>
+            <p style="margin: 0 0 25px 0; color: #666; line-height: 1.5;">
+                Your password has been reset by an administrator. Here are your new login credentials:
+            </p>
+            
+            <!-- Credentials Card -->
+            <div style="background: #e3f2fd; border: 2px solid #3498db; border-radius: 10px; padding: 20px; margin-bottom: 25px;">
+                <h3 style="margin: 0 0 15px 0; color: #1565c0; font-size: 16px;">🔐 New Login Credentials</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #bbdefb; font-weight: 600; color: #1565c0; width: 25%;">Email:</td>
+                        <td style="padding: 12px 0; border-bottom: 1px solid #bbdefb; color: #333; font-family: monospace;">{email}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; font-weight: 600; color: #1565c0;">Password:</td>
+                        <td style="padding: 12px 0;">
+                            <code style="background: #fff; padding: 8px 12px; border-radius: 4px; color: #d32f2f; font-weight: 600; border: 1px solid #e0e0e0; display: inline-block; font-size: 14px;">
+                                {temp_password}
+                            </code>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Security Warning -->
+            <div style="background: #fff3e0; border: 2px solid #ff9800; border-radius: 10px; padding: 20px; margin-bottom: 25px;">
+                <h3 style="margin: 0 0 10px 0; color: #f57c00; font-size: 16px;">⚠️ Important Security Notice</h3>
+                <p style="margin: 0; color: #333; line-height: 1.5;">
+                    <strong>Please log in and change your password immediately</strong> for security. This temporary password should only be used once.
+                </p>
+            </div>
+            
+            <!-- Action Button -->
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{os.environ.get('APP_URL', 'http://localhost:3000')}" 
+                   style="background: linear-gradient(135deg, #1565c0 0%, #3498db 100%); 
+                          color: white; 
+                          text-decoration: none; 
+                          font-weight: 600; 
+                          padding: 15px 30px; 
+                          border-radius: 8px; 
+                          display: inline-block;
+                          box-shadow: 0 4px 12px rgba(52,152,219,0.3);
+                          transition: all 0.3s ease;">
+                    🔑 Login Now
+                </a>
+            </div>
+            
+            <p style="margin: 0; color: #666; text-align: center; font-size: 14px;">
+                If you have any questions, please contact your administrator.
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div style="background: #3b3801; color: white; padding: 25px; text-align: center;">
+            <div style="background: rgba(255,199,0,0.1); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <p style="margin: 0; font-size: 16px; font-weight: 600; color: #ffc700;">
+                    EWORD PUBLISHERS - Making Printing Easy
+                </p>
+            </div>
+            <p style="margin: 0; font-size: 12px; opacity: 0.7;">
+                Leave Management System | This is an automated message. Please do not reply to this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+        """
+        
+        mail.send(msg)
+        return True
+        
+    except Exception as e:
+        print(f"Failed to send password reset email: {str(e)}")
+        return False

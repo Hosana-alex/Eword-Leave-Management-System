@@ -132,7 +132,7 @@ const Register = ({ onSwitchToLogin }) => {
                 onChange={handleChange}
                 required
                 className="form-control"
-                placeholder="your.name.ewordpublishers@gmail.com"
+                placeholder="yourname.ewordpublishers@gmail.com"
               />
             </div>
             
@@ -161,15 +161,13 @@ const Register = ({ onSwitchToLogin }) => {
                 className="form-control"
               >
                 <option value="">Select Department</option>
-                <option value="Engineering">Engineering</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Sales">Sales</option>
-                <option value="HR">Human Resources</option>
-                <option value="Finance">Finance</option>
-                <option value="Operations">Operations</option>
-                <option value="Editing">Editing</option>
-                <option value="Production">Production</option>
-                <option value="Design">Design</option>
+                <option value="Engineering">Client Relations & Onboarding</option>
+                <option value="Marketing">Content Development</option>
+                <option value="Sales">Design & Layout</option>
+                <option value="HR">Publishing & Distribution</option>
+                <option value="Finance">Finance & Administration</option>
+                <option value="Operations">Marketing Support & Advisory</option>
+                <option value="IT">IT Support & Development</option>
               </select>
             </div>
             
