@@ -42,12 +42,12 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
     
-    # SIMPLE CORS - Allow everything for now
+    # COMPREHENSIVE CORS - Apply to ALL routes including blueprints
     CORS(app, 
-         origins="*",  # Allow all origins
+         resources={r"/*": {"origins": "*"}},  # Apply to ALL routes
          methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-         allow_headers="*",  # Allow all headers
-         supports_credentials=False  # Disable credentials for now
+         allow_headers=["Content-Type", "Authorization"],
+         supports_credentials=False
     )
 
     jwt = JWTManager(app)
@@ -56,23 +56,60 @@ def create_app():
     # Initialize email service
     init_mail(app)
     
-    # Simple OPTIONS handler
+    # Handle ALL OPTIONS requests globally
     @app.before_request
     def handle_options():
         if request.method == "OPTIONS":
-            response = jsonify({'status': 'OK'})
+            response = jsonify({'cors': 'enabled'})
             response.headers.add("Access-Control-Allow-Origin", "*")
-            response.headers.add("Access-Control-Allow-Headers", "*")
-            response.headers.add("Access-Control-Allow-Methods", "*")
+            response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS")
             return response
 
-    # Add headers to all responses
+    # Add CORS headers to ALL responses (including blueprint responses)
     @app.after_request
     def after_request(response):
         response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', '*')
-        response.headers.add('Access-Control-Allow-Methods', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS')
         return response
+    
+    # Initialize database and create default admin
+    @app.before_request
+    def create_tables():
+        # Skip for OPTIONS requests
+        if request.method == "OPTIONS":
+            return
+            
+        # Only run this once
+        if not hasattr(create_tables, 'tables_created'):
+            try:
+                db.create_all()
+                
+                # Create default admin user if it doesn't exist
+                admin = User.query.filter_by(email='info.ewordpublishers@gmail.com').first()
+                if not admin:
+                    admin = User(
+                        email='info.ewordpublishers@gmail.com',
+                        name='System Administrator',
+                        department='Administration',
+                        designation='Eword Admin',
+                        contacts='info.ewordpublishers@gmail.com',
+                        role='admin',
+                        status='approved'
+                    )
+                    admin.set_password('Ew0rd@Admin#2025!')
+                    db.session.add(admin)
+                    db.session.commit()
+                    print("✅ Default admin user created")
+                else:
+                    admin.set_password('Ew0rd@Admin#2025!')
+                    db.session.commit()
+                    print("🔄 Admin password updated")
+                    
+                create_tables.tables_created = True
+            except Exception as e:
+                print(f"❌ Database error: {e}")
     
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api')
@@ -82,63 +119,31 @@ def create_app():
     app.register_blueprint(analytics_bp, url_prefix='/api')
     app.register_blueprint(notifications_bp, url_prefix='/api')
     
-    # Initialize database and create default admin
-    @app.before_request
-    def create_tables():
-        # Only run this once
-        if not hasattr(create_tables, 'tables_created'):
-            db.create_all()
-            
-            # Create default admin user if it doesn't exist
-            admin = User.query.filter_by(email='info.ewordpublishers@gmail.com').first()
-            if not admin:
-                admin = User(
-                    email='info.ewordpublishers@gmail.com',
-                    name='System Administrator',
-                    department='Administration',
-                    designation='Eword Admin',
-                    contacts='info.ewordpublishers@gmail.com',
-                    role='admin',
-                    status='approved'
-                )
-                admin.set_password('Ew0rd@Admin#2025!')
-                db.session.add(admin)
-                db.session.commit()
-                print("✅ Default admin user created with email: info.ewordpublishers@gmail.com")
-                print("🔒 Default admin password: Ew0rd@Admin#2025!")
-            else:
-                # Update existing admin password
-                admin.set_password('Ew0rd@Admin#2025!')
-                db.session.commit()
-                print("🔄 Admin password updated to: Ew0rd@Admin#2025!")
-                
-            create_tables.tables_created = True
-    
-    # Health check endpoint
-    @app.route('/health')
-    def health_check():
-        return {
-            'status': 'healthy', 
-            'service': 'EWORD Leave Management API',
-            'cors': 'enabled - all origins'
-        }, 200
-    
-    # Root endpoint
+    # BASIC ENDPOINTS
     @app.route('/')
     def root():
         return {
             'message': 'EWORD Leave Management API',
             'version': '1.0.0',
             'status': 'running',
-            'cors': 'enabled - all origins'
+            'cors': 'FULLY ENABLED FOR ALL ROUTES'
         }, 200
     
-    # Test CORS endpoint
+    @app.route('/health')
+    def health_check():
+        return {
+            'status': 'healthy', 
+            'service': 'EWORD Leave Management API',
+            'cors': 'enabled - all origins',
+            'blueprints': 'cors enabled'
+        }, 200
+    
+    # CORS TEST ENDPOINT
     @app.route('/api/test-cors')
-    def test_cors():
+    def cors_test():
         return {
             'message': 'CORS is working!',
-            'origin': request.headers.get('Origin', 'No origin header'),
+            'origin': request.headers.get('Origin', 'No origin'),
             'method': request.method,
             'cors_status': 'open'
         }, 200
