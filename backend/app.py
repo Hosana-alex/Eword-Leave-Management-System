@@ -42,24 +42,12 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
     
-    # COMPREHENSIVE CORS SETUP
+    # SIMPLE CORS - Allow everything for now
     CORS(app, 
-         origins=[
-             "https://eword-management-system.vercel.app",
-             "http://localhost:3000",
-             "http://127.0.0.1:3000"
-         ],
+         origins="*",  # Allow all origins
          methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-         allow_headers=[
-             "Content-Type", 
-             "Authorization", 
-             "Access-Control-Allow-Credentials",
-             "Access-Control-Allow-Origin",
-             "Access-Control-Allow-Headers",
-             "Access-Control-Allow-Methods"
-         ],
-         supports_credentials=True,
-         expose_headers=["Content-Type", "Authorization"]
+         allow_headers="*",  # Allow all headers
+         supports_credentials=False  # Disable credentials for now
     )
 
     jwt = JWTManager(app)
@@ -68,36 +56,22 @@ def create_app():
     # Initialize email service
     init_mail(app)
     
-    # Handle preflight OPTIONS requests
+    # Simple OPTIONS handler
     @app.before_request
-    def handle_preflight():
+    def handle_options():
         if request.method == "OPTIONS":
             response = jsonify({'status': 'OK'})
-            origin = request.headers.get('Origin')
-            if origin in [
-                "https://eword-management-system.vercel.app",
-                "http://localhost:3000",
-                "http://127.0.0.1:3000"
-            ]:
-                response.headers.add("Access-Control-Allow-Origin", origin)
-                response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-                response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS')
-                response.headers.add('Access-Control-Allow-Credentials', 'true')
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            response.headers.add("Access-Control-Allow-Headers", "*")
+            response.headers.add("Access-Control-Allow-Methods", "*")
             return response
 
-    # Add CORS headers to all responses
+    # Add headers to all responses
     @app.after_request
     def after_request(response):
-        origin = request.headers.get('Origin')
-        if origin in [
-            "https://eword-management-system.vercel.app",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000"
-        ]:
-            response.headers.add('Access-Control-Allow-Origin', origin)
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-            response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS')
-            response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', '*')
+        response.headers.add('Access-Control-Allow-Methods', '*')
         return response
     
     # Register blueprints
@@ -127,13 +101,16 @@ def create_app():
                     role='admin',
                     status='approved'
                 )
-                admin.set_password('Ew0rd@Admin#2025!')  # Updated password
+                admin.set_password('Ew0rd@Admin#2025!')
                 db.session.add(admin)
                 db.session.commit()
+                print("✅ Default admin user created with email: info.ewordpublishers@gmail.com")
+                print("🔒 Default admin password: Ew0rd@Admin#2025!")
             else:
                 # Update existing admin password
                 admin.set_password('Ew0rd@Admin#2025!')
                 db.session.commit()
+                print("🔄 Admin password updated to: Ew0rd@Admin#2025!")
                 
             create_tables.tables_created = True
     
@@ -143,7 +120,7 @@ def create_app():
         return {
             'status': 'healthy', 
             'service': 'EWORD Leave Management API',
-            'cors': 'enabled'
+            'cors': 'enabled - all origins'
         }, 200
     
     # Root endpoint
@@ -153,7 +130,7 @@ def create_app():
             'message': 'EWORD Leave Management API',
             'version': '1.0.0',
             'status': 'running',
-            'cors': 'enabled'
+            'cors': 'enabled - all origins'
         }, 200
     
     # Test CORS endpoint
@@ -163,7 +140,7 @@ def create_app():
             'message': 'CORS is working!',
             'origin': request.headers.get('Origin', 'No origin header'),
             'method': request.method,
-            'timestamp': str(timedelta())
+            'cors_status': 'open'
         }, 200
     
     return app
