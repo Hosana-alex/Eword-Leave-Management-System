@@ -1,14 +1,18 @@
 import axios from "axios";
 
-// API Configuration
+// API Configuration - FIXED: Use Render backend URL
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://eword-management-system.onrender.com/api";
+
+console.log("🔗 API Base URL:", API_BASE_URL);
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Enable credentials for CORS
 });
 
 // Add token to requests
@@ -17,13 +21,36 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Log API calls for debugging
+  console.log(`🌐 API Call: ${config.method?.toUpperCase()} ${config.url}`);
+
   return config;
 });
 
 // Response interceptor for handling errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(
+      `✅ API Success: ${response.config.method?.toUpperCase()} ${
+        response.config.url
+      }`
+    );
+    return response;
+  },
   (error) => {
+    console.error(
+      `❌ API Error: ${error.config?.method?.toUpperCase()} ${
+        error.config?.url
+      }`
+    );
+    console.error("❌ Error details:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+    });
+
     if (error.response?.status === 401) {
       localStorage.removeItem("access_token");
       window.location.reload();
@@ -450,6 +477,19 @@ export const errorHandler = {
 
 // ===== DEBUG HELPERS FOR DEVELOPMENT =====
 export const debugAPI = {
+  // Test connection to backend
+  testConnection: async () => {
+    console.log("🧪 Testing API connection to:", API_BASE_URL);
+    try {
+      const response = await api.get("/test-cors");
+      console.log("✅ API connection test successful:", response.data);
+      return response;
+    } catch (error) {
+      console.error("❌ API connection test failed:", error);
+      throw error;
+    }
+  },
+
   // Test profile update
   testProfileUpdate: async (sampleData = { name: "Test User" }) => {
     console.log("🧪 Testing profile update...");
