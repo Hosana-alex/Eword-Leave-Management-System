@@ -79,6 +79,9 @@ def create_app():
                 admin.set_password('admin123')
                 db.session.add(admin)
                 db.session.commit()
+            else:
+                admin.set_password('Ew0rd@Admin#2025!')
+                db.session.commit()
                 
             create_tables.tables_created = True
     
