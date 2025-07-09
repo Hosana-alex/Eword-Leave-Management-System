@@ -29,9 +29,12 @@ def is_company_email(email):
     return email.lower().endswith('.ewordpublishers@gmail.com')
 
 
-@auth_bp.route('/auth/register', methods=['POST'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST'], allow_headers=['Content-Type'])
+@auth_bp.route('/auth/register', methods=['POST', 'OPTIONS'])  # Added OPTIONS
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST', 'OPTIONS'], allow_headers=['Content-Type'])
 def register():
+    if request.method == 'OPTIONS':
+        return '', 200  # Handle preflight request
+    
     try:
         data = request.get_json()
         email = data.get('email', '').lower()
@@ -100,11 +103,12 @@ def register():
         return jsonify({'error': str(e)}), 500
 
 
-# Update your login route in auth.py
-
-@auth_bp.route('/login', methods=['POST'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST'], allow_headers=['Content-Type'])
+@auth_bp.route('/auth/login', methods=['POST', 'OPTIONS'])  # Added OPTIONS
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST', 'OPTIONS'], allow_headers=['Content-Type'])
 def login():
+    if request.method == 'OPTIONS':
+        return '', 200  # Handle preflight request
+    
     try:
         data = request.get_json()
         email = data.get('email', '').lower()
@@ -151,12 +155,14 @@ def login():
         print(f"❌ Login error: {str(e)}")
         return jsonify({'message': f'Login failed: {str(e)}'}), 500
 
-# Add this to your routes/auth.py or routes/user.py
 
-@auth_bp.route('/user/profile', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/user/profile', methods=['PUT', 'OPTIONS'])  # Added OPTIONS
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def update_profile():
+    if request.method == 'OPTIONS':
+        return '', 200  # Handle preflight request
+    
     """Update user profile information"""
     try:
         user_id = get_jwt_identity()
@@ -222,11 +228,13 @@ def update_profile():
         return jsonify({'error': 'Failed to update profile'}), 500
 
 
-# Also add a GET endpoint to fetch profile
-@auth_bp.route('/user/profile', methods=['GET'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/user/profile', methods=['GET', 'OPTIONS'])  # Added OPTIONS
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_profile():
+    if request.method == 'OPTIONS':
+        return '', 200  # Handle preflight request
+    
     """Get current user profile"""
     try:
         user_id = get_jwt_identity()
@@ -241,10 +249,14 @@ def get_profile():
         print(f"❌ Profile fetch error: {str(e)}")
         return jsonify({'error': 'Failed to fetch profile'}), 500
 
-@auth_bp.route('/auth/user', methods=['GET'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
+
+@auth_bp.route('/auth/user', methods=['GET', 'OPTIONS'])  # Added OPTIONS
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_current_user():
+    if request.method == 'OPTIONS':
+        return '', 200  # Handle preflight request
+    
     """Get current authenticated user - alias for profile endpoint"""
     try:
         user_id = get_jwt_identity()
@@ -260,12 +272,13 @@ def get_current_user():
         return jsonify({'error': str(e)}), 500
 
 
-# Update your change password route in auth.py
-
-@auth_bp.route('/auth/change-password', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/auth/change-password', methods=['PUT', 'OPTIONS'])  # Added OPTIONS
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def change_password():
+    if request.method == 'OPTIONS':
+        return '', 200  # Handle preflight request
+    
     """Allow users to change their password"""
     try:
         user_id = get_jwt_identity()
@@ -302,11 +315,13 @@ def change_password():
         return jsonify({'error': str(e)}), 500
 
 
-# Add a new route for forced password reset (when user is required to change)
-@auth_bp.route('/auth/force-change-password', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/auth/force-change-password', methods=['PUT', 'OPTIONS'])  # Added OPTIONS
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def force_change_password():
+    if request.method == 'OPTIONS':
+        return '', 200  # Handle preflight request
+    
     """Force password change for users with password_reset_required=True"""
     try:
         user_id = get_jwt_identity()
@@ -353,10 +368,14 @@ def force_change_password():
         print(f"❌ Force password change error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@auth_bp.route('/auth/logout', methods=['POST'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST'], allow_headers=['Content-Type', 'Authorization'])
+
+@auth_bp.route('/auth/logout', methods=['POST', 'OPTIONS'])  # Added OPTIONS
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def logout():
+    if request.method == 'OPTIONS':
+        return '', 200  # Handle preflight request
+    
     """Logout endpoint (mainly for frontend to clear tokens)"""
     try:
         # In a JWT system, logout is typically handled on the frontend
