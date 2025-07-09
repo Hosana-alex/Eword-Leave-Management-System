@@ -47,54 +47,43 @@ def create_app():
     # Initialize email service
     init_mail(app)
     
-    # MANUAL CORS - GUARANTEED TO WORK
+    # AGGRESSIVE CORS for Gunicorn
     @app.after_request
     def after_request(response):
-        # Allow specific origins
-        origin = request.headers.get('Origin')
-        allowed_origins = [
-            'https://eword-management-system.vercel.app',
-            'http://localhost:3000',
-            'http://127.0.0.1:3000'
-        ]
+        # FORCE CORS headers - Gunicorn compatible
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
+        response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,PATCH,OPTIONS'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Max-Age'] = '86400'
         
-        if origin in allowed_origins:
-            response.headers.add('Access-Control-Allow-Origin', origin)
+        # Add cache control to prevent header caching
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
         
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
         return response
-
-    # FIXED: Combine both @app.before_request functions into ONE
 
     @app.before_request
     def handle_request():
-        # Handle OPTIONS requests FIRST
+        # Handle OPTIONS requests IMMEDIATELY
         if request.method == "OPTIONS":
-            origin = request.headers.get('Origin')
-            allowed_origins = [
-                'https://eword-management-system.vercel.app',
-                'http://localhost:3000',
-                'http://127.0.0.1:3000'
-            ]
+            response = app.make_default_options_response()
             
-            response = jsonify({'status': 'ok'})
+            # FORCE headers on OPTIONS response
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
+            response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,PATCH,OPTIONS'
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+            response.headers['Access-Control-Max-Age'] = '86400'
             
-            if origin in allowed_origins:
-                response.headers.add("Access-Control-Allow-Origin", origin)
-            
-            response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-            response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS")
-            response.headers.add("Access-Control-Allow-Credentials", "true")
             return response
         
-        # Then handle database initialization
+        # Database initialization
         if not hasattr(handle_request, 'tables_created'):
             try:
                 db.create_all()
                 
-                # Create default admin user if it doesn't exist
                 admin = User.query.filter_by(email='info.ewordpublishers@gmail.com').first()
                 if not admin:
                     admin = User(
@@ -118,7 +107,8 @@ def create_app():
                 handle_request.tables_created = True
             except Exception as e:
                 print(f"❌ Database error: {e}")
-    # Register blueprints
+    
+    # Register blueprints (PROPERLY INDENTED INSIDE create_app)
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(leave_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/api')
@@ -133,7 +123,7 @@ def create_app():
             'message': 'EWORD Leave Management API',
             'version': '1.0.0',
             'status': 'running',
-            'cors': 'MANUAL HEADERS - GUARANTEED WORKING'
+            'cors': 'AGGRESSIVE GUNICORN CORS'
         }, 200
     
     @app.route('/health')
@@ -141,17 +131,17 @@ def create_app():
         return {
             'status': 'healthy', 
             'service': 'EWORD Leave Management API',
-            'cors': 'manual headers working'
+            'cors': 'aggressive gunicorn headers'
         }, 200
     
     # CORS TEST ENDPOINT
     @app.route('/api/test-cors')
     def cors_test():
         return {
-            'message': 'CORS is working with manual headers!',
+            'message': 'CORS is working with aggressive headers!',
             'origin': request.headers.get('Origin', 'No origin'),
             'method': request.method,
-            'cors_status': 'manual'
+            'cors_status': 'aggressive'
         }, 200
     
     return app
