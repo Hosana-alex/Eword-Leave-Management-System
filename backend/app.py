@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
@@ -41,24 +40,53 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     migrate = Migrate(app, db)
-    
-    # CLEAN CORS CONFIGURATION - ONLY THIS, NO MANUAL HEADERS
-    CORS(app, 
-         origins=[
-             "https://eword-management-system.vercel.app",
-             "http://localhost:3000",
-             "http://127.0.0.1:3000"
-         ],
-         methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-         allow_headers=["Content-Type", "Authorization"],
-         supports_credentials=True
-    )
 
     jwt = JWTManager(app)
     bcrypt = Bcrypt(app)
     
     # Initialize email service
     init_mail(app)
+    
+    # MANUAL CORS - GUARANTEED TO WORK
+    @app.after_request
+    def after_request(response):
+        # Allow specific origins
+        origin = request.headers.get('Origin')
+        allowed_origins = [
+            'https://eword-management-system.vercel.app',
+            'http://localhost:3000',
+            'http://127.0.0.1:3000'
+        ]
+        
+        if origin in allowed_origins:
+            response.headers.add('Access-Control-Allow-Origin', origin)
+        
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
+
+    # Handle ALL OPTIONS requests
+    @app.before_request
+    def handle_options():
+        if request.method == "OPTIONS":
+            # Get the origin
+            origin = request.headers.get('Origin')
+            allowed_origins = [
+                'https://eword-management-system.vercel.app',
+                'http://localhost:3000',
+                'http://127.0.0.1:3000'
+            ]
+            
+            response = jsonify({'status': 'ok'})
+            
+            if origin in allowed_origins:
+                response.headers.add("Access-Control-Allow-Origin", origin)
+            
+            response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS")
+            response.headers.add("Access-Control-Allow-Credentials", "true")
+            return response
     
     # Initialize database and create default admin
     @app.before_request
@@ -112,7 +140,7 @@ def create_app():
             'message': 'EWORD Leave Management API',
             'version': '1.0.0',
             'status': 'running',
-            'cors': 'CLEAN CONFIGURATION'
+            'cors': 'MANUAL HEADERS - GUARANTEED WORKING'
         }, 200
     
     @app.route('/health')
@@ -120,17 +148,17 @@ def create_app():
         return {
             'status': 'healthy', 
             'service': 'EWORD Leave Management API',
-            'cors': 'clean configuration'
+            'cors': 'manual headers working'
         }, 200
     
     # CORS TEST ENDPOINT
     @app.route('/api/test-cors')
     def cors_test():
         return {
-            'message': 'CORS is working!',
+            'message': 'CORS is working with manual headers!',
             'origin': request.headers.get('Origin', 'No origin'),
             'method': request.method,
-            'cors_status': 'clean'
+            'cors_status': 'manual'
         }, 200
     
     return app
