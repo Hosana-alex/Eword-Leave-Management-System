@@ -42,7 +42,19 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     migrate = Migrate(app, db)  # Add this line
-    CORS(app, resources={r"/api/*": {"origins": "https://eword-management-system.vercel.app"}}, supports_credentials=True)
+    # CORS configuration - allow both development and production
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": [
+                "https://eword-management-system.vercel.app",
+                "http://localhost:3000",
+                "http://127.0.0.1:3000"
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
+        }
+    })
 
 
     jwt = JWTManager(app)
