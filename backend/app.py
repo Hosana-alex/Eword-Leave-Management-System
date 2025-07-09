@@ -42,12 +42,16 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
     
-    # COMPREHENSIVE CORS - Apply to ALL routes including blueprints
+    # CLEAN CORS CONFIGURATION - ONLY THIS, NO MANUAL HEADERS
     CORS(app, 
-         resources={r"/*": {"origins": "*"}},  # Apply to ALL routes
+         origins=[
+             "https://eword-management-system.vercel.app",
+             "http://localhost:3000",
+             "http://127.0.0.1:3000"
+         ],
          methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
          allow_headers=["Content-Type", "Authorization"],
-         supports_credentials=False
+         supports_credentials=True
     )
 
     jwt = JWTManager(app)
@@ -55,24 +59,6 @@ def create_app():
     
     # Initialize email service
     init_mail(app)
-    
-    # Handle ALL OPTIONS requests globally
-    @app.before_request
-    def handle_options():
-        if request.method == "OPTIONS":
-            response = jsonify({'cors': 'enabled'})
-            response.headers.add("Access-Control-Allow-Origin", "*")
-            response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-            response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS")
-            return response
-
-    # Add CORS headers to ALL responses (including blueprint responses)
-    @app.after_request
-    def after_request(response):
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS')
-        return response
     
     # Initialize database and create default admin
     @app.before_request
@@ -126,7 +112,7 @@ def create_app():
             'message': 'EWORD Leave Management API',
             'version': '1.0.0',
             'status': 'running',
-            'cors': 'FULLY ENABLED FOR ALL ROUTES'
+            'cors': 'CLEAN CONFIGURATION'
         }, 200
     
     @app.route('/health')
@@ -134,8 +120,7 @@ def create_app():
         return {
             'status': 'healthy', 
             'service': 'EWORD Leave Management API',
-            'cors': 'enabled - all origins',
-            'blueprints': 'cors enabled'
+            'cors': 'clean configuration'
         }, 200
     
     # CORS TEST ENDPOINT
@@ -145,7 +130,7 @@ def create_app():
             'message': 'CORS is working!',
             'origin': request.headers.get('Origin', 'No origin'),
             'method': request.method,
-            'cors_status': 'open'
+            'cors_status': 'clean'
         }, 200
     
     return app
