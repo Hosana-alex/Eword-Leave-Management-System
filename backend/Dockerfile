@@ -5,11 +5,10 @@ FROM python:3.11-slim
 
 # ─────────────────────────────────────────────────────────────
 # 2. OS-level build tools that C-extension wheels sometimes need
-#    (gcc, g++, make).  They add <70 MB and speed up any fallback
-#    compile.  Remove if you’re sure all wheels exist.
+#    (gcc, g++, make). Remove if you’re sure all wheels exist.
 # ─────────────────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      build-essential gcc g++ \
+    build-essential gcc g++ \
     && rm -rf /var/lib/apt/lists/*
 
 # ─────────────────────────────────────────────────────────────
@@ -19,16 +18,15 @@ WORKDIR /app
 
 # ─────────────────────────────────────────────────────────────
 # 4. Copy & install Python dependencies
-#    (two layers so a code change doesn’t invalidate wheel cache)
 # ─────────────────────────────────────────────────────────────
-COPY backend/requirements.txt .
+COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel \
- && pip install -r requirements.txt
+    && pip install -r requirements.txt
 
 # ─────────────────────────────────────────────────────────────
-# 5. Copy the rest of the backend source
+# 5. Copy the rest of the backend source code
 # ─────────────────────────────────────────────────────────────
-COPY backend/ .
+COPY . .
 
 # ─────────────────────────────────────────────────────────────
 # 6. Expose port (not strictly required; Render sets $PORT)
