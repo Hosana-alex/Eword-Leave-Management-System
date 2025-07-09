@@ -66,11 +66,12 @@ def create_app():
         response.headers.add('Access-Control-Allow-Credentials', 'true')
         return response
 
-    # Handle ALL OPTIONS requests
+    # FIXED: Combine both @app.before_request functions into ONE
+
     @app.before_request
-    def handle_options():
+    def handle_request():
+        # Handle OPTIONS requests FIRST
         if request.method == "OPTIONS":
-            # Get the origin
             origin = request.headers.get('Origin')
             allowed_origins = [
                 'https://eword-management-system.vercel.app',
@@ -87,16 +88,9 @@ def create_app():
             response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS")
             response.headers.add("Access-Control-Allow-Credentials", "true")
             return response
-    
-    # Initialize database and create default admin
-    @app.before_request
-    def create_tables():
-        # Skip for OPTIONS requests
-        if request.method == "OPTIONS":
-            return
-            
-        # Only run this once
-        if not hasattr(create_tables, 'tables_created'):
+        
+        # Then handle database initialization
+        if not hasattr(handle_request, 'tables_created'):
             try:
                 db.create_all()
                 
@@ -121,10 +115,9 @@ def create_app():
                     db.session.commit()
                     print("🔄 Admin password updated")
                     
-                create_tables.tables_created = True
+                handle_request.tables_created = True
             except Exception as e:
                 print(f"❌ Database error: {e}")
-    
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(leave_bp, url_prefix='/api')
