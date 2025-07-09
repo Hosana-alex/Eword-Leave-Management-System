@@ -8,6 +8,15 @@ from models.leave_application import LeaveApplication
 from utils.database import db
 import json
 
+from flask_cors import cross_origin
+
+# Production CORS configuration
+ALLOWED_ORIGINS = [
+    "https://eword-management-system.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
+
 notifications_bp = Blueprint('notifications', __name__)
 
 # Notification creation functions - FIXED
@@ -194,6 +203,7 @@ def notify_upcoming_leave_reminder(application, days_until):
 # All the API endpoints remain the same...
 
 @notifications_bp.route('/notifications', methods=['GET'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_notifications():
     """Get user's notifications with filtering and pagination"""
@@ -242,6 +252,7 @@ def get_notifications():
         return jsonify({'error': str(e)}), 500
 
 @notifications_bp.route('/notifications/<int:notification_id>/read', methods=['PUT'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def mark_notification_read(notification_id):
     """Mark a notification as read"""
@@ -271,6 +282,7 @@ def mark_notification_read(notification_id):
         return jsonify({'error': str(e)}), 500
 
 @notifications_bp.route('/notifications/mark-all-read', methods=['PUT'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def mark_all_notifications_read():
     """Mark all notifications as read for the current user"""
@@ -297,6 +309,7 @@ def mark_all_notifications_read():
         return jsonify({'error': str(e)}), 500
 
 @notifications_bp.route('/notifications/<int:notification_id>', methods=['DELETE'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['DELETE'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def delete_notification(notification_id):
     """Delete a notification"""
@@ -321,6 +334,7 @@ def delete_notification(notification_id):
         return jsonify({'error': str(e)}), 500
 
 @notifications_bp.route('/notifications/unread-count', methods=['GET'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_unread_count():
     """Get count of unread notifications"""

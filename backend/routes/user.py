@@ -7,9 +7,19 @@ from models.leave_balance import LeaveBalance
 from models.leave_application import LeaveApplication
 from utils.database import db
 
+from flask_cors import cross_origin
+
+# Production CORS configuration
+ALLOWED_ORIGINS = [
+    "https://eword-management-system.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
+
 user_bp = Blueprint('user', __name__)
 
 @user_bp.route('/user/profile', methods=['GET'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_user_profile():
     """Get current user's profile"""
@@ -26,6 +36,7 @@ def get_user_profile():
         return jsonify({'error': str(e)}), 500
 
 @user_bp.route('/user/profile', methods=['PUT'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def update_user_profile():
     """Update current user's profile"""
@@ -61,6 +72,7 @@ def update_user_profile():
         return jsonify({'error': str(e)}), 500
 
 @user_bp.route('/user/leave-balance', methods=['GET'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_user_leave_balance():
     """Get current user's leave balance"""
@@ -95,6 +107,7 @@ def get_user_leave_balance():
         return jsonify({'error': str(e)}), 500
 
 @user_bp.route('/user/applications', methods=['GET'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_user_applications():
     """Get current user's leave applications"""
@@ -134,6 +147,7 @@ def get_user_applications():
         return jsonify({'error': str(e)}), 500
 
 @user_bp.route('/user/calendar', methods=['GET'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_user_calendar():
     """Get current user's calendar data"""

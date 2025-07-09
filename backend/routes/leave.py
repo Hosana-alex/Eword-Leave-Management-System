@@ -8,10 +8,20 @@ from utils.database import db
 from utils.email_service import send_leave_application_email, send_status_update_email
 from routes.notifications import notify_leave_application_submitted
 
+from flask_cors import cross_origin
+
+# Production CORS configuration
+ALLOWED_ORIGINS = [
+    "https://eword-management-system.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
+
 leave_bp = Blueprint('leave', __name__)
 
 
 @leave_bp.route('/leave-applications', methods=['POST'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def submit_leave_application():
     try:
@@ -128,6 +138,7 @@ def submit_leave_application():
     
     
 @leave_bp.route('/leave-applications', methods=['GET'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_leave_applications():
     try:
@@ -173,6 +184,7 @@ def get_leave_applications():
         return jsonify({'message': f'Failed to get applications: {str(e)}'}), 500
 
 @leave_bp.route('/leave-applications/calendar', methods=['GET'])
+@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_calendar_data():
     try:
