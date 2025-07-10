@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
@@ -27,6 +27,13 @@ from routes.notifications import notifications_bp
 
 # Load environment variables
 load_dotenv()
+
+# Production CORS configuration - SAME AS ROUTES
+ALLOWED_ORIGINS = [
+    "https://eword-management-system.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
 
 def create_app():
     print("🚀 Starting EWORD Leave Management System...")
@@ -56,16 +63,8 @@ def create_app():
     except Exception as e:
         print(f"⚠️ Email service failed: {e}")
     
-    # FLASK-CORS CONFIGURATION
-    CORS(app, resources={
-        r"/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
-            "supports_credentials": True
-        }
-    })
-    print("✅ Flask-CORS configured")
+    # 🔧 REMOVED GLOBAL CORS - Let routes handle their own CORS
+    print("✅ CORS configured at route level")
 
     @app.before_request
     def handle_request():
@@ -111,40 +110,44 @@ def create_app():
     
     print("✅ Blueprints registered")
     
-    # BASIC ENDPOINTS
+    # BASIC ENDPOINTS WITH CORS
     @app.route('/')
+    @cross_origin(origins=ALLOWED_ORIGINS)
     def root():
         return {
             'message': 'EWORD Leave Management API',
             'version': '1.0.0',
             'status': 'running',
-            'cors': 'Flask-CORS enabled',
+            'cors': 'Route-level CORS enabled',
             'timestamp': str(timedelta())
         }, 200
     
     @app.route('/health')
+    @cross_origin(origins=ALLOWED_ORIGINS)
     def health_check():
         return {
             'status': 'healthy', 
             'service': 'EWORD Leave Management API',
-            'cors': 'Flask-CORS active',
+            'cors': 'Route-level CORS active',
             'database': 'connected'
         }, 200
     
     @app.route('/api/test-cors')
+    @cross_origin(origins=ALLOWED_ORIGINS)
     def cors_test():
         return {
-            'message': 'CORS test with Flask-CORS!',
+            'message': 'CORS test with route-level decorators!',
             'origin': request.headers.get('Origin', 'No origin'),
             'method': request.method,
-            'cors_status': 'Flask-CORS'
+            'cors_status': 'Route-level CORS'
         }, 200
     
     @app.route('/debug/info')
+    @cross_origin(origins=ALLOWED_ORIGINS)
     def debug_info():
         return {
             'app_name': 'EWORD Leave Management',
-            'flask_cors': 'enabled',
+            'cors_method': 'route-level',
             'blueprints_registered': len(app.blueprints),
             'database_url_type': 'PostgreSQL' if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite',
             'environment': os.environ.get('FLASK_ENV', 'production'),
@@ -152,7 +155,7 @@ def create_app():
             'routes_count': len(app.url_map._rules)
         }, 200
     
-    print("✅ Routes defined")
+    print("✅ Routes defined with CORS")
     print("🎉 EWORD Leave Management System ready!")
     return app
 

@@ -9,12 +9,19 @@ from flask_cors import cross_origin
 
 auth_bp = Blueprint('auth', __name__)
 
-# Production CORS configuration - ONLY allow your frontend
+# Production CORS configuration - CONSISTENT ACROSS ALL ROUTES
 ALLOWED_ORIGINS = [
     "https://eword-management-system.vercel.app",
-    "http://localhost:3000",  # For development
-    "http://127.0.0.1:3000"   # For development
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
 ]
+
+# CORS settings to use consistently
+CORS_SETTINGS = {
+    'origins': ALLOWED_ORIGINS,
+    'methods': ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    'allow_headers': ['Content-Type', 'Authorization']
+}
 
 def is_company_email(email):
     """
@@ -29,12 +36,9 @@ def is_company_email(email):
     return email.lower().endswith('.ewordpublishers@gmail.com')
 
 
-@auth_bp.route('/auth/register', methods=['POST', 'OPTIONS'])  # Added OPTIONS
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST', 'OPTIONS'], allow_headers=['Content-Type'])
+@auth_bp.route('/auth/register', methods=['POST'])
+@cross_origin(**CORS_SETTINGS)
 def register():
-    if request.method == 'OPTIONS':
-        return '', 200  # Handle preflight request
-    
     try:
         data = request.get_json()
         email = data.get('email', '').lower()
@@ -103,12 +107,9 @@ def register():
         return jsonify({'error': str(e)}), 500
 
 
-@auth_bp.route('/auth/login', methods=['POST', 'OPTIONS'])  # Added OPTIONS
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST', 'OPTIONS'], allow_headers=['Content-Type'])
+@auth_bp.route('/auth/login', methods=['POST'])
+@cross_origin(**CORS_SETTINGS)
 def login():
-    if request.method == 'OPTIONS':
-        return '', 200  # Handle preflight request
-    
     try:
         data = request.get_json()
         email = data.get('email', '').lower()
@@ -156,13 +157,10 @@ def login():
         return jsonify({'message': f'Login failed: {str(e)}'}), 500
 
 
-@auth_bp.route('/user/profile', methods=['PUT', 'OPTIONS'])  # Added OPTIONS
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/user/profile', methods=['PUT'])
+@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def update_profile():
-    if request.method == 'OPTIONS':
-        return '', 200  # Handle preflight request
-    
     """Update user profile information"""
     try:
         user_id = get_jwt_identity()
@@ -228,13 +226,10 @@ def update_profile():
         return jsonify({'error': 'Failed to update profile'}), 500
 
 
-@auth_bp.route('/user/profile', methods=['GET', 'OPTIONS'])  # Added OPTIONS
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/user/profile', methods=['GET'])
+@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def get_profile():
-    if request.method == 'OPTIONS':
-        return '', 200  # Handle preflight request
-    
     """Get current user profile"""
     try:
         user_id = get_jwt_identity()
@@ -250,13 +245,10 @@ def get_profile():
         return jsonify({'error': 'Failed to fetch profile'}), 500
 
 
-@auth_bp.route('/auth/user', methods=['GET', 'OPTIONS'])  # Added OPTIONS
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/auth/user', methods=['GET'])
+@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def get_current_user():
-    if request.method == 'OPTIONS':
-        return '', 200  # Handle preflight request
-    
     """Get current authenticated user - alias for profile endpoint"""
     try:
         user_id = get_jwt_identity()
@@ -272,13 +264,10 @@ def get_current_user():
         return jsonify({'error': str(e)}), 500
 
 
-@auth_bp.route('/auth/change-password', methods=['PUT', 'OPTIONS'])  # Added OPTIONS
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/auth/change-password', methods=['PUT'])
+@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def change_password():
-    if request.method == 'OPTIONS':
-        return '', 200  # Handle preflight request
-    
     """Allow users to change their password"""
     try:
         user_id = get_jwt_identity()
@@ -315,13 +304,10 @@ def change_password():
         return jsonify({'error': str(e)}), 500
 
 
-@auth_bp.route('/auth/force-change-password', methods=['PUT', 'OPTIONS'])  # Added OPTIONS
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/auth/force-change-password', methods=['PUT'])
+@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def force_change_password():
-    if request.method == 'OPTIONS':
-        return '', 200  # Handle preflight request
-    
     """Force password change for users with password_reset_required=True"""
     try:
         user_id = get_jwt_identity()
@@ -369,13 +355,10 @@ def force_change_password():
         return jsonify({'error': str(e)}), 500
 
 
-@auth_bp.route('/auth/logout', methods=['POST', 'OPTIONS'])  # Added OPTIONS
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization'])
+@auth_bp.route('/auth/logout', methods=['POST'])
+@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def logout():
-    if request.method == 'OPTIONS':
-        return '', 200  # Handle preflight request
-    
     """Logout endpoint (mainly for frontend to clear tokens)"""
     try:
         # In a JWT system, logout is typically handled on the frontend
