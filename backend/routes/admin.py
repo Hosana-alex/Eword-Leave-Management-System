@@ -18,14 +18,6 @@ from routes.notifications import (
     notify_leave_application_submitted
 )
 from utils.email_service import send_status_update_email, send_password_reset_email
-from flask_cors import cross_origin
-
-# Production CORS configuration
-ALLOWED_ORIGINS = [
-    "https://eword-management-system.vercel.app",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000"
-]
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -42,7 +34,6 @@ def send_email_async(app, email, name, status, details, comments):
 # ===== USER MANAGEMENT ROUTES =====
 
 @admin_bp.route('/admin/users', methods=['GET'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_all_users():
     """Get all users with filtering options"""
@@ -96,7 +87,6 @@ def get_all_users():
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/admin/users/<int:user_id>/approve', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def approve_user_registration(user_id):
     """Approve pending user registration"""
@@ -137,7 +127,6 @@ def approve_user_registration(user_id):
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/admin/users/<int:user_id>/reject', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def reject_user_registration(user_id):
     """Reject pending user registration"""
@@ -163,7 +152,6 @@ def reject_user_registration(user_id):
 # ===== LEAVE APPLICATION MANAGEMENT =====
 
 @admin_bp.route('/admin/applications', methods=['GET'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_all_applications():
     """Get all leave applications with advanced filtering"""
@@ -250,10 +238,7 @@ def get_all_applications():
         print(f"Error in get_all_applications: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-
-
 @admin_bp.route('/admin/applications/<int:application_id>/status', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def update_application_status(application_id):
     try:
@@ -344,7 +329,6 @@ def update_application_status(application_id):
 # ===== LEGACY APPROVE/REJECT ROUTES (for backward compatibility) =====
 
 @admin_bp.route('/leave-applications/<int:app_id>/approve', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def approve_leave_application(app_id):
     """Legacy approve route - redirects to new status route"""
@@ -363,7 +347,6 @@ def approve_leave_application(app_id):
     return result
 
 @admin_bp.route('/leave-applications/<int:app_id>/reject', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def reject_leave_application(app_id):
     """Legacy reject route - redirects to new status route"""
@@ -384,7 +367,6 @@ def reject_leave_application(app_id):
 # ===== DASHBOARD STATISTICS =====
 
 @admin_bp.route('/dashboard/stats', methods=['GET'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_dashboard_stats():
     """Get comprehensive dashboard statistics"""
@@ -442,7 +424,6 @@ def get_dashboard_stats():
 # ===== DEPARTMENT ANALYTICS =====
 
 @admin_bp.route('/admin/analytics/departments', methods=['GET'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['GET'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def get_department_analytics():
     """Get analytics by department"""
@@ -478,13 +459,10 @@ def get_department_analytics():
     except Exception as e:
         print(f"Error in get_department_analytics: {str(e)}")
         return jsonify({'error': str(e)}), 500
-    
 
-# ===== PHASE 1 NEW ENDPOINTS (FIXED ROUTES) =====
-
+# ===== BULK OPERATIONS =====
 
 @admin_bp.route('/admin/users/<int:user_id>/reset-password', methods=['POST'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def reset_user_password(user_id):
     try:
@@ -516,14 +494,13 @@ def reset_user_password(user_id):
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/admin/users/<int:user_id>/deactivate', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def deactivate_user(user_id):
     try:
         user = User.query.get_or_404(user_id)
         user.status = 'deactivated'
-        user.deactivated_at = datetime.utcnow()  # Add this field to User model
-        user.deactivated_by = get_jwt_identity()  # Track who deactivated
+        user.deactivated_at = datetime.utcnow()
+        user.deactivated_by = get_jwt_identity()
         db.session.commit()
         
         return jsonify({
@@ -536,14 +513,13 @@ def deactivate_user(user_id):
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/admin/users/<int:user_id>/reactivate', methods=['PUT'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['PUT'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def reactivate_user(user_id):
     try:
         user = User.query.get_or_404(user_id)
         user.status = 'approved'
-        user.reactivated_at = datetime.utcnow()  # Add this field to User model
-        user.reactivated_by = get_jwt_identity()  # Track who reactivated
+        user.reactivated_at = datetime.utcnow()
+        user.reactivated_by = get_jwt_identity()
         db.session.commit()
         
         return jsonify({
@@ -556,7 +532,6 @@ def reactivate_user(user_id):
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/admin/users/bulk-approve', methods=['POST'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def bulk_approve_users():
     try:
@@ -578,10 +553,6 @@ def bulk_approve_users():
                 
                 # Create leave balances for approved user
                 create_initial_leave_balances(user.id)
-                
-                # Send approval email
-                send_approval_email(user.email, user.name)
-                
                 approved_count += 1
         
         db.session.commit()
@@ -597,7 +568,6 @@ def bulk_approve_users():
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/admin/users/bulk-reject', methods=['POST'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def bulk_reject_users():
     try:
@@ -616,10 +586,6 @@ def bulk_reject_users():
                 user.status = 'rejected'
                 user.rejected_at = datetime.utcnow()
                 user.rejected_by = get_jwt_identity()
-                
-                # Send rejection email
-                send_rejection_email(user.email, user.name)
-                
                 rejected_count += 1
         
         db.session.commit()
@@ -635,7 +601,6 @@ def bulk_reject_users():
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/admin/users/bulk-deactivate', methods=['POST'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def bulk_deactivate_users():
     try:
@@ -669,7 +634,6 @@ def bulk_deactivate_users():
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/admin/users/export', methods=['POST'])
-@cross_origin(origins=ALLOWED_ORIGINS, methods=['POST'], allow_headers=['Content-Type', 'Authorization'])
 @jwt_required()
 def export_users_csv():
     try:
@@ -722,7 +686,6 @@ def export_users_csv():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
 def create_initial_leave_balances(user_id):
     """Create initial leave balances for newly approved user"""
     current_year = datetime.now().year
@@ -739,13 +702,3 @@ def create_initial_leave_balances(user_id):
             bereavement_leave_total=5
         )
         db.session.add(leave_balance)
-
-def send_approval_email(email, name):
-    """Send user approval email"""
-    # Implement approval email logic
-    pass
-
-def send_rejection_email(email, name):
-    """Send user rejection email"""
-    # Implement rejection email logic
-    pass
