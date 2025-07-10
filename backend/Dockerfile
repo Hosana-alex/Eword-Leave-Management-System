@@ -39,4 +39,4 @@ EXPOSE 8000
 #    - Added --timeout 120 for longer request handling
 #    - Use app:app since we have app = create_app() in app.py
 # ─────────────────────────────────────────────────────────────
-CMD CMD python app.py
+CMD ["python", "app.py"]
