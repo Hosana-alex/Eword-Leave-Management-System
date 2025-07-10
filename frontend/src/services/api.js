@@ -3,7 +3,7 @@ import axios from "axios";
 // API Configuration
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://eword-management-system.onrender.com/api";
+  "https://eword-leave-management-system-production.up.railway.app/api"; // ← NEW Railway URL
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
