@@ -5,23 +5,8 @@ from models.user import User
 from models.leave_balance import LeaveBalance
 from utils.database import db
 from routes.notifications import notify_user_registration, notify_user_approved
-from flask_cors import cross_origin
 
 auth_bp = Blueprint('auth', __name__)
-
-# Production CORS configuration - CONSISTENT ACROSS ALL ROUTES
-ALLOWED_ORIGINS = [
-    "https://eword-management-system.vercel.app",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000"
-]
-
-# CORS settings to use consistently
-CORS_SETTINGS = {
-    'origins': ALLOWED_ORIGINS,
-    'methods': ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    'allow_headers': ['Content-Type', 'Authorization']
-}
 
 def is_company_email(email):
     """
@@ -37,7 +22,6 @@ def is_company_email(email):
 
 
 @auth_bp.route('/auth/register', methods=['POST'])
-@cross_origin(**CORS_SETTINGS)
 def register():
     try:
         data = request.get_json()
@@ -108,7 +92,6 @@ def register():
 
 
 @auth_bp.route('/auth/login', methods=['POST'])
-@cross_origin(**CORS_SETTINGS)
 def login():
     try:
         data = request.get_json()
@@ -158,7 +141,6 @@ def login():
 
 
 @auth_bp.route('/user/profile', methods=['PUT'])
-@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def update_profile():
     """Update user profile information"""
@@ -227,7 +209,6 @@ def update_profile():
 
 
 @auth_bp.route('/user/profile', methods=['GET'])
-@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def get_profile():
     """Get current user profile"""
@@ -246,7 +227,6 @@ def get_profile():
 
 
 @auth_bp.route('/auth/user', methods=['GET'])
-@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def get_current_user():
     """Get current authenticated user - alias for profile endpoint"""
@@ -265,7 +245,6 @@ def get_current_user():
 
 
 @auth_bp.route('/auth/change-password', methods=['PUT'])
-@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def change_password():
     """Allow users to change their password"""
@@ -305,7 +284,6 @@ def change_password():
 
 
 @auth_bp.route('/auth/force-change-password', methods=['PUT'])
-@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def force_change_password():
     """Force password change for users with password_reset_required=True"""
@@ -356,7 +334,6 @@ def force_change_password():
 
 
 @auth_bp.route('/auth/logout', methods=['POST'])
-@cross_origin(**CORS_SETTINGS)
 @jwt_required()
 def logout():
     """Logout endpoint (mainly for frontend to clear tokens)"""
