@@ -39,4 +39,4 @@ EXPOSE 8000
 #    - Added --timeout 120 for longer request handling
 #    - Use app:app since we have app = create_app() in app.py
 # ─────────────────────────────────────────────────────────────
-CMD sh -c "gunicorn -b 0.0.0.0:${PORT} --workers 1 --timeout 120 --access-logfile - --error-logfile - app:app"
+CMD CMD python app.py
