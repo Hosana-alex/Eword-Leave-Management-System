@@ -5,7 +5,7 @@ FROM python:3.11-slim
 
 # ─────────────────────────────────────────────────────────────
 # 2. OS-level build tools that C-extension wheels sometimes need
-#    (gcc, g++, make). Remove if you’re sure all wheels exist.
+#    (gcc, g++, make). Remove if you're sure all wheels exist.
 # ─────────────────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential gcc g++ \
@@ -34,7 +34,9 @@ COPY . .
 EXPOSE 8000
 
 # ─────────────────────────────────────────────────────────────
-# 7. Start Gunicorn – Render injects $PORT
+# 7. Start Gunicorn with Flask app factory pattern support
+#    - Added --workers 1 for stability on free tier
+#    - Added --timeout 120 for longer request handling
+#    - Use app:app since we have app = create_app() in app.py
 # ─────────────────────────────────────────────────────────────
-CMD sh -c "gunicorn -b 0.0.0.0:${PORT} app:app"
-
+CMD sh -c "gunicorn -b 0.0.0.0:${PORT} --workers 1 --timeout 120 --access-logfile - --error-logfile - app:app"
