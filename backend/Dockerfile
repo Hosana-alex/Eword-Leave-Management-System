@@ -31,7 +31,7 @@ COPY . .
 # ─────────────────────────────────────────────────────────────
 # 6. Expose port (not strictly required; Render sets $PORT)
 # ─────────────────────────────────────────────────────────────
-EXPOSE 8000
+EXPOSE 8080
 
 # ─────────────────────────────────────────────────────────────
 # 7. Start Gunicorn with Flask app factory pattern support
@@ -39,4 +39,4 @@ EXPOSE 8000
 #    - Added --timeout 120 for longer request handling
 #    - Use app:app since we have app = create_app() in app.py
 # ─────────────────────────────────────────────────────────────
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "-w", "1", "--timeout", "120", "app:app"]
+CMD sh -c "gunicorn -b 0.0.0.0:${PORT} -w 1 --timeout 120 app:app"
