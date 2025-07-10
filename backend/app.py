@@ -29,7 +29,7 @@ from routes.notifications import notifications_bp
 load_dotenv()
 
 def create_app():
-    print("🚀 EMERGENCY CORS FIX - Starting EWORD Leave Management System...")
+    print("🚀 Starting EWORD Leave Management System...")
     app = Flask(__name__)
     
     # Configuration
@@ -56,53 +56,24 @@ def create_app():
     except Exception as e:
         print(f"⚠️ Email service failed: {e}")
     
-    # 🔧 EMERGENCY CORS FIX - VERY PERMISSIVE
-    print("🆘 Applying emergency CORS configuration...")
+    # 🔧 TARGETED CORS CONFIGURATION
     CORS(app, 
-         origins=["https://eword-management-system.vercel.app", "*"],  # Your domain + wildcard
-         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-         allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-         supports_credentials=False,  # Disable credentials for broader compatibility
-         send_wildcard=True,
-         automatic_options=True,
-         intercept_exceptions=False
+         origins=[
+             "https://eword-management-system.vercel.app",
+             "http://localhost:3000",
+             "http://127.0.0.1:3000"
+         ],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+         allow_headers=['Content-Type', 'Authorization'],
+         supports_credentials=True,
+         automatic_options=True
     )
-    print("✅ EMERGENCY CORS configured - VERCEL + WILDCARD")
-
-    @app.after_request
-    def after_request(response):
-        """Add CORS headers manually as backup"""
-        origin = request.headers.get('Origin')
-        if origin:
-            response.headers.add('Access-Control-Allow-Origin', origin)
-        else:
-            response.headers.add('Access-Control-Allow-Origin', '*')
-        
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH')
-        response.headers.add('Access-Control-Allow-Credentials', 'false')
-        
-        return response
+    print("✅ Targeted CORS configured for specific origins")
 
     @app.before_request
-    def handle_preflight():
-        """Handle preflight requests manually"""
-        if request.method == "OPTIONS":
-            response = jsonify({'message': 'Preflight OK'})
-            origin = request.headers.get('Origin')
-            if origin:
-                response.headers.add('Access-Control-Allow-Origin', origin)
-            else:
-                response.headers.add('Access-Control-Allow-Origin', '*')
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin')
-            response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH')
-            response.headers.add('Access-Control-Allow-Credentials', 'false')
-            return response
-
-    @app.before_request
-    def handle_database():
+    def handle_request():
         # Database initialization
-        if not hasattr(handle_database, 'tables_created'):
+        if not hasattr(handle_request, 'tables_created'):
             try:
                 print("🔍 Initializing database...")
                 db.create_all()
@@ -128,7 +99,7 @@ def create_app():
                     db.session.commit()
                     print("🔄 Admin password updated")
                     
-                handle_database.tables_created = True
+                handle_request.tables_created = True
                 print("✅ Database initialization complete")
             except Exception as e:
                 print(f"❌ Database error: {e}")
@@ -147,11 +118,11 @@ def create_app():
     @app.route('/')
     def root():
         return {
-            'message': 'EWORD Leave Management API - EMERGENCY CORS FIX',
+            'message': 'EWORD Leave Management API',
             'version': '1.0.0',
             'status': 'running',
-            'cors': 'EMERGENCY CORS - ALL ORIGINS ALLOWED',
-            'fix_type': 'emergency'
+            'cors': 'Targeted CORS enabled',
+            'timestamp': str(timedelta())
         }, 200
     
     @app.route('/health')
@@ -159,41 +130,39 @@ def create_app():
         return {
             'status': 'healthy', 
             'service': 'EWORD Leave Management API',
-            'cors': 'EMERGENCY CORS ACTIVE',
-            'database': 'connected',
-            'fix_applied': True
+            'cors': 'Targeted CORS active',
+            'database': 'connected'
         }, 200
     
     @app.route('/api/test-cors')
     def cors_test():
         return {
-            'message': 'EMERGENCY CORS TEST SUCCESS!',
+            'message': 'CORS test with targeted origins!',
             'origin': request.headers.get('Origin', 'No origin'),
             'method': request.method,
-            'cors_status': 'EMERGENCY CORS WORKING',
-            'all_origins': 'allowed'
+            'cors_status': 'Targeted CORS'
         }, 200
     
     @app.route('/debug/info')
     def debug_info():
         return {
             'app_name': 'EWORD Leave Management',
-            'cors_method': 'EMERGENCY-ALL-ORIGINS',
-            'fix_status': 'EMERGENCY DEPLOYED',
+            'cors_method': 'targeted-global',
             'blueprints_registered': len(app.blueprints),
             'database_url_type': 'PostgreSQL' if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite',
             'environment': os.environ.get('FLASK_ENV', 'production'),
+            'python_version': os.sys.version.split()[0],
             'routes_count': len([rule for rule in app.url_map.iter_rules()])
         }, 200
     
-    print("✅ Emergency routes defined")
-    print("🆘 EMERGENCY CORS FIX READY - ALL ORIGINS ALLOWED!")
+    print("✅ Routes defined")
+    print("🎉 EWORD Leave Management System ready!")
     return app
 
-print("📦 Loading EMERGENCY CORS FIX...")
+print("📦 Loading EWORD Leave Management System...")
 app = create_app()
-print("🆘 EMERGENCY APPLICATION CREATED!")
+print("🚀 Application created successfully!")
 
 if __name__ == '__main__':
-    print("🔥 Starting emergency server...")
+    print("🔥 Starting development server...")
     app.run(debug=True, host='0.0.0.0', port=5000)
