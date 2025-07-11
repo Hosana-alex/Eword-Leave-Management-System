@@ -1,4 +1,4 @@
-// components/profile/UserProfile.jsx - Sidebar Navigation Design
+// components/profile/UserProfile.jsx - Fully Responsive Design
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { userAPI } from '../../services/api';
@@ -11,7 +11,8 @@ const UserProfile = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const [leaveBalance, setLeaveBalance] = useState(null);
   const [balanceError, setBalanceError] = useState(null);
-  const [activeTab, setActiveTab] = useState('basic'); // New: Tab state
+  const [activeTab, setActiveTab] = useState('basic');
+  const [sidebarOpen, setSidebarOpen] = useState(false); // For mobile sidebar toggle
   
   const [formData, setFormData] = useState({
     // Basic Information (existing)
@@ -26,22 +27,29 @@ const UserProfile = ({ onClose }) => {
     emergency_phone: user?.emergency_phone || '',
     emergency_relationship: user?.emergency_relationship || '',
     
-    // NEW: Personal Information
+    // Personal Information
     date_of_birth: user?.date_of_birth || '',
     gender: user?.gender || '',
     
-    // NEW: Address Information
+    // Address Information
     address: user?.address || '',
     city: user?.city || '',
     postal_code: user?.postal_code || '',
     
-    // NEW: Employment Details (simplified)
+    // Employment Details
     employment_type: user?.employment_type || 'full-time'
   });
 
   useEffect(() => {
     fetchLeaveBalance();
   }, []);
+
+  // Close sidebar when tab changes on mobile
+  useEffect(() => {
+    if (window.innerWidth <= 768) {
+      setSidebarOpen(false);
+    }
+  }, [activeTab]);
 
   const fetchLeaveBalance = async () => {
     try {
@@ -117,68 +125,112 @@ const UserProfile = ({ onClose }) => {
 
   // Navigation items
   const navItems = [
-    { id: 'basic', label: 'Basic Information', icon: '👤' },
-    { id: 'personal', label: 'Personal Details', icon: '📋' },
-    { id: 'employment', label: 'Employment', icon: '🏢' },
-    { id: 'balance', label: 'Leave Balance', icon: '📊' }
+    { id: 'basic', label: 'Basic Information', icon: '👤', shortLabel: 'Basic' },
+    { id: 'personal', label: 'Personal Details', icon: '📋', shortLabel: 'Personal' },
+    { id: 'employment', label: 'Employment', icon: '🏢', shortLabel: 'Work' },
+    { id: 'balance', label: 'Leave Balance', icon: '📊', shortLabel: 'Balance' }
   ];
 
   return (
     <div className="profile-overlay">
-      <div className="profile-modal sidebar-modal">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="profile-close-sidebar"
-          aria-label="Close profile"
-        >
-          ×
-        </button>
+      <div className="profile-modal responsive-modal">
+        {/* Mobile Header */}
+        <div className="mobile-header">
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+          </button>
+          
+          <h2 className="mobile-title">
+            {navItems.find(item => item.id === activeTab)?.label || 'Profile'}
+          </h2>
+          
+          <button
+            onClick={onClose}
+            className="mobile-close"
+            aria-label="Close profile"
+          >
+            ×
+          </button>
+        </div>
 
-        <div className="profile-sidebar-layout">
-          {/* Sidebar Navigation */}
-          <div className="profile-sidebar">
-            {/* User Info Section */}
-            <div className="sidebar-user-info">
-              <div className="sidebar-avatar">
-                {getInitials(user?.name)}
+        {/* Mobile Navigation Tabs */}
+        <div className="mobile-tabs">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`mobile-tab ${activeTab === item.id ? 'active' : ''}`}
+            >
+              <span className="mobile-tab-icon">{item.icon}</span>
+              <span className="mobile-tab-label">{item.shortLabel}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="profile-layout">
+          {/* Sidebar - Desktop & Mobile Overlay */}
+          <div className={`profile-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+            {/* Sidebar Overlay for Mobile */}
+            {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+            
+            <div className="sidebar-content">
+              {/* Desktop Close Button */}
+              <button
+                onClick={onClose}
+                className="desktop-close"
+                aria-label="Close profile"
+              >
+                ×
+              </button>
+
+              {/* User Info Section */}
+              <div className="sidebar-user-info">
+                <div className="sidebar-avatar">
+                  {getInitials(user?.name)}
+                </div>
+                <h3 className="sidebar-user-name">{user?.name}</h3>
+                <p className="sidebar-user-role">{user?.designation} • {user?.department}</p>
+                <div className="sidebar-user-status">
+                  <span className={`status-badge status-${user?.status}`}>
+                    {user?.status}
+                  </span>
+                </div>
               </div>
-              <h3 className="sidebar-user-name">{user?.name}</h3>
-              <p className="sidebar-user-role">{user?.designation} • {user?.department}</p>
-              <div className="sidebar-user-status">
-                <span className={`status-badge status-${user?.status}`}>
-                  {user?.status}
-                </span>
+
+              {/* Navigation Menu */}
+              <nav className="sidebar-nav">
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`sidebar-nav-item ${activeTab === item.id ? 'active' : ''}`}
+                  >
+                    <span className="sidebar-nav-icon">{item.icon}</span>
+                    <span className="sidebar-nav-label">{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+
+              {/* Footer */}
+              <div className="sidebar-footer">
+                <p className="sidebar-footer-text">
+                  EWORD Publishers<br />
+                  Leave Management System
+                </p>
               </div>
-            </div>
-
-            {/* Navigation Menu */}
-            <nav className="sidebar-nav">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`sidebar-nav-item ${activeTab === item.id ? 'active' : ''}`}
-                >
-                  <span className="sidebar-nav-icon">{item.icon}</span>
-                  <span className="sidebar-nav-label">{item.label}</span>
-                </button>
-              ))}
-            </nav>
-
-            {/* Footer */}
-            <div className="sidebar-footer">
-              <p className="sidebar-footer-text">
-                EWORD Publishers<br />
-                Leave Management System
-              </p>
             </div>
           </div>
 
           {/* Content Area */}
           <div className="profile-content-area">
-            {/* Header */}
-            <div className="content-header">
+            {/* Desktop Header */}
+            <div className="desktop-header">
               <h2 className="content-title">
                 {navItems.find(item => item.id === activeTab)?.label || 'Profile'}
               </h2>

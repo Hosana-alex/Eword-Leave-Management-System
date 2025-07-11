@@ -69,8 +69,8 @@ def create_app():
     CORS(app, 
          origins=[
              "https://eword-management-system.vercel.app",
-             "http://localhost:3000",
-             "http://127.0.0.1:3000"
+             "http://localhost:5173",
+             "http://127.0.0.1:5173"
          ],
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
          allow_headers=['Content-Type', 'Authorization'],
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     # Development server (not used in production)
     port = int(os.environ.get('PORT', 8000))
     logger.info(f"Starting development server on port {port}")
-    app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(debug=True, host='0.0.0.0', port=port)
 
 
     

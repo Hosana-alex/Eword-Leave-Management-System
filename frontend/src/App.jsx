@@ -18,7 +18,7 @@ const AppContent = () => {
   const { user, logout, loading } = useAuth();
   const { notifications, unreadCount, addNotification } = useNotifications();
   
-  // NEW: Track if user needs password reset
+  // Track if user needs password reset
   const [userNeedsPasswordReset, setUserNeedsPasswordReset] = useState(false);
   
   // Set initial tab based on user role
@@ -39,7 +39,7 @@ const AppContent = () => {
     }
   }, [user]);
 
-  // NEW: Check if user needs password reset
+  // Check if user needs password reset
   useEffect(() => {
     if (user && user.password_reset_required) {
       setUserNeedsPasswordReset(true);
@@ -111,7 +111,7 @@ const AppContent = () => {
     );
   }
 
-  // UPDATED: Show login if no user OR if user needs password reset
+  // Show login if no user OR if user needs password reset
   if (!user || userNeedsPasswordReset) {
     return (
       <div className="app">
@@ -140,13 +140,13 @@ const AppContent = () => {
             <div className="logo-icon">
               <img src={logoIcon} alt="EP Logo" />
             </div>
-            <div>
+            <div className="logo-text">
               <h1>EWORD PUBLISHERS</h1>
               <p>Leave Management System</p>
             </div>
           </div>
           
-          {/* Desktop Navigation - Hidden on Mobile */}
+          {/* Desktop Navigation with Elastic Transform Support */}
           <div className="nav-tabs desktop-nav">
             {user.role === 'admin' && (
               <>
@@ -154,25 +154,29 @@ const AppContent = () => {
                   className={`nav-tab ${currentTab === 'dashboard' ? 'active' : ''}`}
                   onClick={() => setCurrentTab('dashboard')}
                 >
-                  📊 Dashboard
+                  <span className="nav-icon">📊</span>
+                  <span className="nav-text">Dashboard</span>
                 </button>
                 <button 
                   className={`nav-tab ${currentTab === 'users' ? 'active' : ''}`}
                   onClick={() => setCurrentTab('users')}
                 >
-                  👥 Users
+                  <span className="nav-icon">👥</span>
+                  <span className="nav-text">Users</span>
                 </button>
                 <button 
                   className={`nav-tab ${currentTab === 'analytics' ? 'active' : ''}`}
                   onClick={() => setCurrentTab('analytics')}
                 >
-                  📈 Analytics
+                  <span className="nav-icon">📈</span>
+                  <span className="nav-text">Analytics</span>
                 </button>
                 <button 
                   className={`nav-tab ${currentTab === 'calendar' ? 'active' : ''}`}
                   onClick={() => setCurrentTab('calendar')}
                 >
-                  📅 Calendar
+                  <span className="nav-icon">📅</span>
+                  <span className="nav-text">Calendar</span>
                 </button>
               </>
             )}
@@ -183,25 +187,28 @@ const AppContent = () => {
                   className={`nav-tab ${currentTab === 'my-applications' ? 'active' : ''}`}
                   onClick={() => setCurrentTab('my-applications')}
                 >
-                  📋 My Applications
+                  <span className="nav-icon">📋</span>
+                  <span className="nav-text">My Applications</span>
                 </button>
                 <button 
                   className={`nav-tab ${currentTab === 'apply' ? 'active' : ''}`}
                   onClick={() => setCurrentTab('apply')}
                 >
-                  ➕ Apply Leave
+                  <span className="nav-icon">➕</span>
+                  <span className="nav-text">Apply Leave</span>
                 </button>
                 <button 
                   className={`nav-tab ${currentTab === 'calendar' ? 'active' : ''}`}
                   onClick={() => setCurrentTab('calendar')}
                 >
-                  📅 Calendar
+                  <span className="nav-icon">📅</span>
+                  <span className="nav-text">Calendar</span>
                 </button>
               </>
             )}
           </div>
           
-          {/* Mobile & Desktop User Info */}
+          {/* User Info Section */}
           <div className="user-info">
             {/* Notification Bell */}
             <button 
@@ -219,11 +226,16 @@ const AppContent = () => {
                 onClick={() => setShowProfile(true)}
                 className="nav-tab"
               >
-                👤 {user.name}
+                <span className="nav-icon">👤</span>
+                <span className="nav-text">{user.name}</span>
               </button>
               
-              <button onClick={logout} className="nav-tab">
-                🚪 Logout
+              <button 
+                onClick={logout} 
+                className="nav-tab user-logout"
+              >
+                <span className="nav-icon">🚪</span>
+                <span className="nav-text">Logout</span>
               </button>
             </div>
 
